@@ -82,8 +82,7 @@ export default function App() {
   const [loaderOpacity, setLoaderOpacity] = useState(1);
   const [showLoader, setShowLoader] = useState(true);
 
-  // Scroll / Canvas States
-  const [scrollProgress, setScrollProgress] = useState(0);
+  // Scroll / Canvas States and DOM Refs
   const scrollProgressRef = useRef(0);
   const currentFrameRef = useRef(0);
   const drawnFrameRef = useRef(-1);
@@ -91,6 +90,13 @@ export default function App() {
   
   const runwayRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
+  const leftBadgeRef = useRef<HTMLDivElement>(null);
+  const rightBadgeRef = useRef<HTMLDivElement>(null);
+  const phase1Ref = useRef<HTMLDivElement>(null);
+  const phase2Ref = useRef<HTMLDivElement>(null);
+  const phase3Ref = useRef<HTMLDivElement>(null);
+  const phase4Ref = useRef<HTMLDivElement>(null);
 
   // Interactive UI States
   const [activePlannerTab, setActivePlannerTab] = useState<'morning' | 'afternoon' | 'evening' | 'night'>('morning');
@@ -182,7 +188,7 @@ export default function App() {
     };
   }, []);
 
-  // 2. Passive Scroll Listener
+  // 2. Passive Scroll Listener & DOM Ref Updater
   useEffect(() => {
     if (!loadingComplete) return;
 
@@ -195,7 +201,6 @@ export default function App() {
       const normalized = Math.max(0, Math.min(1, progress));
 
       scrollProgressRef.current = normalized;
-      setScrollProgress(normalized);
 
       // Map scroll progress to frame index
       const frameIndex = Math.min(
@@ -203,6 +208,50 @@ export default function App() {
         TOTAL_FRAMES - 1
       );
       currentFrameRef.current = frameIndex;
+
+      // Direct DOM updates for performance (avoids React re-renders on scroll)
+      
+      // 1. Progress Bar Width
+      if (progressBarRef.current) {
+        progressBarRef.current.style.width = `${normalized * 100}%`;
+      }
+
+      // 2. Starting Floating Badges
+      const isStart = normalized >= 0.00 && normalized <= 0.22;
+      if (leftBadgeRef.current) {
+        if (isStart) {
+          leftBadgeRef.current.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+          leftBadgeRef.current.classList.add('opacity-100', 'scale-100');
+        } else {
+          leftBadgeRef.current.classList.remove('opacity-100', 'scale-100');
+          leftBadgeRef.current.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+        }
+      }
+      if (rightBadgeRef.current) {
+        if (isStart) {
+          rightBadgeRef.current.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+          rightBadgeRef.current.classList.add('opacity-100', 'scale-100');
+        } else {
+          rightBadgeRef.current.classList.remove('opacity-100', 'scale-100');
+          rightBadgeRef.current.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+        }
+      }
+
+      // 3. Phased Cards Visibility
+      const togglePhase = (ref: React.RefObject<HTMLDivElement>, active: boolean) => {
+        if (ref.current) {
+          if (active) {
+            ref.current.classList.add('visible');
+          } else {
+            ref.current.classList.remove('visible');
+          }
+        }
+      };
+
+      togglePhase(phase1Ref, normalized >= 0.00 && normalized <= 0.22);
+      togglePhase(phase2Ref, normalized >= 0.26 && normalized <= 0.45);
+      togglePhase(phase3Ref, normalized >= 0.50 && normalized <= 0.68);
+      togglePhase(phase4Ref, normalized >= 0.74 && normalized <= 0.94);
     };
 
     handleScroll();
@@ -278,30 +327,79 @@ export default function App() {
       {/* 1. PRELOADER SCREEN */}
       {showLoader && (
         <div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#06070b] transition-opacity duration-700"
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#06070b] transition-opacity duration-700 overflow-hidden"
           style={{ opacity: loaderOpacity }}
         >
-          <div className="flex flex-col items-center w-full max-w-md px-8 text-center">
-            <Infinity size={48} className="text-emerald-500 animate-pulse mb-6" strokeWidth={1.5} />
-            <h2 className="text-white text-2xl sm:text-3xl font-medium tracking-tight mb-2">
-              Preparing Your Sanctuary
+          {/* Animated Background blobs to make glassmorphism look stunning */}
+          <div className="absolute top-[-10%] right-[-10%] w-[280px] h-[280px] sm:w-[400px] sm:h-[400px] bg-emerald-500/10 rounded-full blur-[80px] sm:blur-[120px] animate-pulse" />
+          <div className="absolute bottom-[-10%] left-[-10%] w-[280px] h-[280px] sm:w-[400px] sm:h-[400px] bg-violet-500/10 rounded-full blur-[80px] sm:blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
+
+          {/* Glass Card */}
+          <div className="w-[88%] max-w-sm liquid-glass-premium rounded-3xl p-6 sm:p-10 border border-white/10 flex flex-col items-center text-center shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden">
+            {/* Logo Badge */}
+            <div className="relative mb-5 flex items-center justify-center">
+              <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-md animate-ping scale-75" />
+              <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-inner">
+                <Infinity size={28} className="text-emerald-400" strokeWidth={1.5} />
+              </div>
+            </div>
+
+            <h2 className="text-white text-lg sm:text-2xl font-semibold tracking-tight mb-2">
+              Equilibrium
             </h2>
-            <p className="text-white/40 text-xs sm:text-sm leading-relaxed mb-6">
+            <p className="text-white/40 text-[11px] sm:text-xs leading-relaxed max-w-xs mb-6">
               Aligning routines, insights, and expert advisors for your personalized wellness journey.
             </p>
-            
-            {/* Progress Bar Container */}
-            <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden mb-3">
-              <div
-                className="bg-gradient-to-r from-emerald-500 to-cyan-500 h-full rounded-full transition-all duration-300 ease-out"
-                style={{ width: `${(loadedCount / TOTAL_FRAMES) * 100}%` }}
-              />
+
+            {/* Circular Progress & Info */}
+            <div className="w-full space-y-3 mb-6">
+              {/* Progress Bar Container */}
+              <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden relative border border-white/5">
+                <div
+                  className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-violet-500 h-full rounded-full transition-all duration-300 ease-out shadow-[0_0_8px_rgba(52,211,153,0.5)]"
+                  style={{ width: `${(loadedCount / TOTAL_FRAMES) * 100}%` }}
+                />
+              </div>
+              
+              {/* Loading text percentage & status */}
+              <div className="flex items-center justify-between text-[10px] text-white/50 font-medium px-1">
+                <span className="animate-pulse flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  {loadedCount < TOTAL_FRAMES ? 'Syncing biological models...' : 'Sanctuary prepared'}
+                </span>
+                <span className="text-emerald-400 font-mono font-semibold">
+                  {Math.round((loadedCount / TOTAL_FRAMES) * 100)}%
+                </span>
+              </div>
             </div>
-            
-            {/* Loading text percentage */}
-            <span className="text-emerald-400 font-mono text-sm font-medium">
-              {Math.round((loadedCount / TOTAL_FRAMES) * 100)}%
-            </span>
+
+            {/* Dynamic Step indicators */}
+            <div className="w-full border-t border-white/5 pt-4 text-left space-y-2">
+              <div className="flex items-center gap-2 text-[10px] text-white/60">
+                <span className="text-emerald-400">✓</span>
+                <span>Initialized Chrono-Engine</span>
+              </div>
+              <div className="flex items-center gap-2 text-[10px]">
+                {loadedCount >= 100 ? (
+                  <span className="text-emerald-400">✓</span>
+                ) : (
+                  <span className="w-2 h-2 rounded-full border border-white/20 border-t-emerald-400 animate-spin" />
+                )}
+                <span className={loadedCount >= 100 ? 'text-white/60' : 'text-white/30'}>
+                  Synchronizing Video Frames ({loadedCount}/{TOTAL_FRAMES})
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-[10px]">
+                {loadedCount === TOTAL_FRAMES ? (
+                  <span className="text-emerald-400">✓</span>
+                ) : (
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/10" />
+                )}
+                <span className={loadedCount === TOTAL_FRAMES ? 'text-white/60' : 'text-white/30'}>
+                  Pre-rendering advisory interfaces
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -310,8 +408,9 @@ export default function App() {
       {loadingComplete && (
         <div className="fixed top-0 left-0 right-0 h-1 z-50">
           <div
+            ref={progressBarRef}
             className="h-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-violet-500 transition-all duration-100 ease-out shadow-[0_0_10px_rgba(16,185,129,0.5)]"
-            style={{ width: `${scrollProgress * 100}%` }}
+            style={{ width: '0%' }}
           />
         </div>
       )}
@@ -395,23 +494,22 @@ export default function App() {
           />
 
           {/* Floating starting badges */}
-          <div className={`absolute top-28 left-6 sm:left-12 lg:left-24 hidden md:flex items-center gap-2 liquid-glass px-4 py-2.5 rounded-full border border-white/5 text-xs text-white/80 transition-all duration-700 ${scrollProgress >= 0.00 && scrollProgress <= 0.22 ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
+          <div ref={leftBadgeRef} className="absolute top-28 left-6 sm:left-12 lg:left-24 hidden md:flex items-center gap-2 liquid-glass px-4 py-2.5 rounded-full border border-white/5 text-xs text-white/80 transition-all duration-700 opacity-100 scale-100">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
             <span className="font-medium">Evidence-Based Methodology</span>
           </div>
 
-          <div className={`absolute top-28 right-6 sm:right-12 lg:right-24 hidden md:flex items-center gap-2 liquid-glass px-4 py-2.5 rounded-full border border-white/5 text-xs text-white/80 transition-all duration-700 ${scrollProgress >= 0.00 && scrollProgress <= 0.22 ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
+          <div ref={rightBadgeRef} className="absolute top-28 right-6 sm:right-12 lg:right-24 hidden md:flex items-center gap-2 liquid-glass px-4 py-2.5 rounded-full border border-white/5 text-xs text-white/80 transition-all duration-700 opacity-100 scale-100">
             <Globe size={12} className="text-cyan-400" />
             <span className="font-medium">100% Privacy-Encrypted Logs</span>
           </div>
 
           {/* Active Overlay: Phase 1 (Intro) */}
           <div
-            className={`absolute inset-0 flex flex-col items-center justify-end pb-24 md:pb-28 px-6 text-center scroll-phase-card ${
-              scrollProgress >= 0.00 && scrollProgress <= 0.22 ? 'visible' : ''
-            }`}
+            ref={phase1Ref}
+            className="absolute inset-0 flex flex-col items-center justify-end pb-24 md:pb-28 px-6 text-center scroll-phase-card visible"
           >
-            <div className="max-w-2xl bg-black/25 backdrop-blur-sm rounded-3xl p-6 md:p-8 border border-white/5">
+            <div className="max-w-2xl rounded-3xl p-6 md:p-8">
               <span className="inline-flex items-center gap-1 bg-white/10 px-3 py-1 rounded-full text-emerald-400 text-[10px] font-semibold tracking-wider uppercase mb-4">
                 <Sparkles size={10} /> Introducing Equilibrium
               </span>
@@ -435,22 +533,6 @@ export default function App() {
                   View Planner
                 </a>
               </div>
-
-              {/* Pillars column grid details */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 pt-6 border-t border-white/5 text-left">
-                <div>
-                  <span className="text-emerald-400 text-xs font-semibold block">01. Circadian Sync</span>
-                  <span className="text-white/40 text-[10px] block mt-0.5">Align with biological light cycles.</span>
-                </div>
-                <div>
-                  <span className="text-violet-400 text-xs font-semibold block">02. Somatic Habits</span>
-                  <span className="text-white/40 text-[10px] block mt-0.5">Evidence-based daily routines.</span>
-                </div>
-                <div>
-                  <span className="text-cyan-400 text-xs font-semibold block">03. Neural Logs</span>
-                  <span className="text-white/40 text-[10px] block mt-0.5">Secure, non-invasive metrics.</span>
-                </div>
-              </div>
             </div>
             {/* Scroll Assist Hint */}
             <div className="absolute bottom-6 flex flex-col items-center gap-1 text-white/40 text-[10px] uppercase tracking-widest animate-bounce">
@@ -461,22 +543,21 @@ export default function App() {
 
           {/* Active Overlay: Phase 2 (Mindful Routines) */}
           <div
-            className={`absolute inset-0 flex items-center justify-center md:justify-start px-6 md:pl-24 lg:pl-32 scroll-phase-card ${
-              scrollProgress >= 0.26 && scrollProgress <= 0.45 ? 'visible' : ''
-            }`}
+            ref={phase2Ref}
+            className="absolute inset-0 flex items-center justify-center md:justify-start px-6 md:pl-24 lg:pl-32 scroll-phase-card"
           >
-            <div className="w-full max-w-md liquid-glass-premium rounded-3xl p-6 sm:p-8 border border-white/10 shadow-2xl">
-              <div className="bg-emerald-500/10 text-emerald-400 p-3 rounded-2xl w-fit mb-5">
-                <Compass size={22} />
+            <div className="w-full max-w-md p-4 sm:p-6 text-left">
+              <div className="bg-emerald-500/10 text-emerald-400 p-2 rounded-xl w-fit mb-4 sm:mb-5">
+                <Compass size={20} />
               </div>
-              <h2 className="text-white text-2xl sm:text-3xl font-medium tracking-tight mb-3">
+              <h2 className="text-white text-xl sm:text-3xl font-medium tracking-tight mb-2 sm:mb-3">
                 Mindful Routines: <br/>
                 <span className="text-gradient-green-blue">Consistency Redefined</span>
               </h2>
-              <p className="text-white/60 text-xs sm:text-sm leading-relaxed mb-6">
+              <p className="text-white/60 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6">
                 Consistency builds lifestyle change. Cultivate wellness pathways through custom routines designed to match your body's circadian clock, lowering stress levels and boosting output.
               </p>
-              <ul className="space-y-3 mb-6">
+              <ul className="space-y-2 mb-4 sm:mb-6 hidden sm:block">
                 <li className="flex items-start gap-2.5 text-xs text-white/80">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
                   <span>Somatic timers to anchor behavior paths</span>
@@ -497,29 +578,28 @@ export default function App() {
 
           {/* Active Overlay: Phase 3 (Growth Analytics) */}
           <div
-            className={`absolute inset-0 flex items-center justify-center md:justify-end px-6 md:pr-24 lg:pr-32 scroll-phase-card ${
-              scrollProgress >= 0.50 && scrollProgress <= 0.68 ? 'visible' : ''
-            }`}
+            ref={phase3Ref}
+            className="absolute inset-0 flex items-center justify-center md:justify-end px-6 md:pr-24 lg:pr-32 scroll-phase-card"
           >
-            <div className="w-full max-w-md liquid-glass-premium rounded-3xl p-6 sm:p-8 border border-white/10 shadow-2xl">
-              <div className="bg-violet-500/10 text-violet-400 p-3 rounded-2xl w-fit mb-5">
-                <Activity size={22} />
+            <div className="w-full max-w-md p-4 sm:p-6 text-left">
+              <div className="bg-violet-500/10 text-violet-400 p-2 rounded-xl w-fit mb-4 sm:mb-5">
+                <Activity size={20} />
               </div>
-              <h2 className="text-white text-2xl sm:text-3xl font-medium tracking-tight mb-3">
+              <h2 className="text-white text-xl sm:text-3xl font-medium tracking-tight mb-2 sm:mb-3">
                 Growth Analytics: <br/>
                 <span className="text-gradient-purple-blue">Visualize Progress</span>
               </h2>
-              <p className="text-white/60 text-xs sm:text-sm leading-relaxed mb-6">
-                Understand the shifts in your baseline well-being. Our analytical dashboard tracks mood indexes, heart rate variability patterns, and circadian alignment metrics to present clear recovery insights.
+              <p className="text-white/60 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6">
+                Understand the shifts in your baseline well-being. Our analytical dashboard tracks mood indexes, heart rate variability patterns, and circadian alignment metrics.
               </p>
-              <div className="grid grid-cols-2 gap-3 mb-6 bg-white/5 p-4 rounded-2xl border border-white/5">
+              <div className="grid grid-cols-2 gap-3 mb-4 sm:mb-6 bg-white/5 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-white/5">
                 <div>
                   <span className="text-white/40 text-[9px] uppercase tracking-wider block">Stress Index</span>
-                  <span className="text-violet-400 text-base font-semibold">-34% Average</span>
+                  <span className="text-violet-400 text-sm sm:text-base font-semibold">-34% Avg</span>
                 </div>
                 <div>
                   <span className="text-white/40 text-[9px] uppercase tracking-wider block">Sleep Stability</span>
-                  <span className="text-emerald-400 text-base font-semibold">+41% Increase</span>
+                  <span className="text-emerald-400 text-sm sm:text-base font-semibold">+41% Inc</span>
                 </div>
               </div>
               <a
@@ -533,22 +613,21 @@ export default function App() {
 
           {/* Active Overlay: Phase 4 (Tailored Insights) */}
           <div
-            className={`absolute inset-0 flex flex-col items-center justify-center px-6 text-center scroll-phase-card ${
-              scrollProgress >= 0.74 && scrollProgress <= 0.94 ? 'visible' : ''
-            }`}
+            ref={phase4Ref}
+            className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center scroll-phase-card"
           >
-            <div className="w-full max-w-xl liquid-glass-premium rounded-3xl p-8 md:p-10 border border-white/10 shadow-2xl">
-              <div className="bg-cyan-500/10 text-cyan-400 p-3 rounded-2xl w-fit mx-auto mb-5">
-                <BrainCircuit size={24} />
+            <div className="w-full max-w-xl p-6 sm:p-8 text-center">
+              <div className="bg-cyan-500/10 text-cyan-400 p-2 rounded-xl w-fit mx-auto mb-4 sm:mb-5">
+                <BrainCircuit size={22} />
               </div>
-              <h2 className="text-white text-3xl md:text-4xl font-medium tracking-tight mb-4">
+              <h2 className="text-white text-2xl sm:text-4xl font-medium tracking-tight mb-3 sm:mb-4">
                 Personalized Insights: <br/>
                 <span className="text-gradient-green-blue">Driven by Circadian Science</span>
               </h2>
-              <p className="text-white/70 text-sm leading-relaxed mb-8 max-w-md mx-auto">
+              <p className="text-white/70 text-xs sm:text-sm leading-relaxed mb-6 sm:mb-8 max-w-md mx-auto">
                 No generic programs. Equilibrium leverages medical research and behavioral logs to give you actionable triggers exactly when your body is primed for them.
               </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
                 <button className="w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-xs font-bold px-7 py-3.5 rounded-full hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all">
                   Begin Free Evaluation
                 </button>
@@ -565,7 +644,7 @@ export default function App() {
       </div>
 
       {/* 5. SECTION A: WELLNESS HUB */}
-      <section id="wellness-hub" className="relative py-24 md:py-32 bg-[#06070b]">
+      <section id="wellness-hub" className="relative py-24 md:py-32 bg-[#06070b] overflow-hidden">
         {/* Background ambient glows */}
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-500/5 rounded-full blur-3xl pointer-events-none" />

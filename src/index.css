@@ -23,7 +23,7 @@
 body {
   background-color: var(--bg-primary);
   color: #f3f4f6;
-  overflow-x: hidden;
+  overflow-x: clip;
   margin: 0;
   padding: 0;
 }
