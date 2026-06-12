@@ -1,77 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import Lenis from 'lenis';
-import {
-  ChevronDown,
-  Infinity,
-  Menu,
-  X,
-  Compass,
-  Moon,
-  Zap,
-  Activity,
-  ArrowRight,
-  Sparkles,
-  ArrowDown,
-  Heart,
-  Clock,
-  BrainCircuit,
-  Lock,
-  Globe
-} from 'lucide-react';
 
-const TOTAL_FRAMES = 193;
+const TOTAL_FRAMES = 344;
 const BATCH_SIZE = 20;
 
-// Routine Planner Database
-const ROUTINES = {
-  morning: {
-    title: 'Rise & Align',
-    time: '6:00 AM – 9:00 AM',
-    colorClass: 'text-gradient-gold',
-    items: [
-      { activity: 'Deep Breathwork', duration: '10 min', desc: 'Calm the nervous system and oxygenate cells.' },
-      { activity: 'Hydration Reset', duration: '5 min', desc: 'Drink 500ml of mineral-infused water.' },
-      { activity: 'Circadian Light Exposure', duration: '15 min', desc: 'Step outside to anchor your cortisol cycle.' }
-    ]
-  },
-  afternoon: {
-    title: 'Focus & Flow',
-    time: '12:00 PM – 3:00 PM',
-    colorClass: 'text-gradient-green-blue',
-    items: [
-      { activity: 'Somatic Reset & Stretch', duration: '8 min', desc: 'Release physical tension from sitting.' },
-      { activity: 'Cognitive Offload', duration: '5 min', desc: 'Clear task residue before deep focus.' },
-      { activity: 'Nutrient-Dense Lunch', duration: '30 min', desc: 'Low-glycemic fuel to avoid afternoon slumps.' }
-    ]
-  },
-  evening: {
-    title: 'Decompress & Reflect',
-    time: '6:00 PM – 9:00 PM',
-    colorClass: 'text-gradient-purple-blue',
-    items: [
-      { activity: 'Digital Sunset', duration: '20 min', desc: 'Shift all personal screens to warm amber tones.' },
-      { activity: 'Gratitude Reflection', duration: '10 min', desc: 'List three positive moments from the day.' },
-      { activity: 'Somatic Release Ritual', duration: '15 min', desc: 'Light yoga and breathing to transition to sleep.' }
-    ]
-  },
-  night: {
-    title: 'Deep Recovery',
-    time: '10:00 PM – 5:00 AM',
-    colorClass: 'text-gradient-purple-blue',
-    items: [
-      { activity: 'Darkness Sanctuary', duration: 'Ongoing', desc: 'Ensure absolute blackout environment.' },
-      { activity: 'Circadian Cooldown', duration: 'Ongoing', desc: 'Set room temperature to a cool 18°C.' },
-      { activity: 'Thermal Transition', duration: '20 min', desc: 'Warm bath or shower to drop core temperature.' }
-    ]
-  }
-};
 
-const navLinks = [
-  { label: 'Home', active: true },
-  { label: 'Wellness Space' },
-  { label: 'Routine Engine' },
-  { label: 'Our Experts' },
-];
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -85,6 +18,7 @@ export default function App() {
   // Scroll / Canvas States and DOM Refs
   const scrollProgressRef = useRef(0);
   const currentFrameRef = useRef(0);
+  const animatedFrameRef = useRef(0);
   const drawnFrameRef = useRef(-1);
   const imagesRef = useRef<HTMLImageElement[]>([]);
   
@@ -100,7 +34,6 @@ export default function App() {
 
   // Interactive UI States
   const [activePlannerTab, setActivePlannerTab] = useState<'morning' | 'afternoon' | 'evening' | 'night'>('morning');
-  const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
 
   // Initialize Lenis Smooth Scroll
@@ -188,16 +121,14 @@ export default function App() {
     };
   }, []);
 
-  // 2. Passive Scroll Listener & DOM Ref Updater
+  // 2. Passive Scroll Listener (reflow-free using window scroll offset)
   useEffect(() => {
     if (!loadingComplete) return;
 
     const handleScroll = () => {
-      if (!runwayRef.current) return;
-      const rect = runwayRef.current.getBoundingClientRect();
-      
-      // Calculate progress across the scroll runway
-      const progress = -rect.top / (rect.height - window.innerHeight);
+      const scrollY = window.scrollY;
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = maxScroll <= 0 ? 0 : scrollY / maxScroll;
       const normalized = Math.max(0, Math.min(1, progress));
 
       scrollProgressRef.current = normalized;
@@ -208,50 +139,6 @@ export default function App() {
         TOTAL_FRAMES - 1
       );
       currentFrameRef.current = frameIndex;
-
-      // Direct DOM updates for performance (avoids React re-renders on scroll)
-      
-      // 1. Progress Bar Width
-      if (progressBarRef.current) {
-        progressBarRef.current.style.width = `${normalized * 100}%`;
-      }
-
-      // 2. Starting Floating Badges
-      const isStart = normalized >= 0.00 && normalized <= 0.22;
-      if (leftBadgeRef.current) {
-        if (isStart) {
-          leftBadgeRef.current.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
-          leftBadgeRef.current.classList.add('opacity-100', 'scale-100');
-        } else {
-          leftBadgeRef.current.classList.remove('opacity-100', 'scale-100');
-          leftBadgeRef.current.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
-        }
-      }
-      if (rightBadgeRef.current) {
-        if (isStart) {
-          rightBadgeRef.current.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
-          rightBadgeRef.current.classList.add('opacity-100', 'scale-100');
-        } else {
-          rightBadgeRef.current.classList.remove('opacity-100', 'scale-100');
-          rightBadgeRef.current.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
-        }
-      }
-
-      // 3. Phased Cards Visibility
-      const togglePhase = (ref: React.RefObject<HTMLDivElement>, active: boolean) => {
-        if (ref.current) {
-          if (active) {
-            ref.current.classList.add('visible');
-          } else {
-            ref.current.classList.remove('visible');
-          }
-        }
-      };
-
-      togglePhase(phase1Ref, normalized >= 0.00 && normalized <= 0.22);
-      togglePhase(phase2Ref, normalized >= 0.26 && normalized <= 0.45);
-      togglePhase(phase3Ref, normalized >= 0.50 && normalized <= 0.68);
-      togglePhase(phase4Ref, normalized >= 0.74 && normalized <= 0.94);
     };
 
     handleScroll();
@@ -265,7 +152,7 @@ export default function App() {
     };
   }, [loadingComplete]);
 
-  // 3. requestAnimationFrame (rAF) Render Loop
+  // 3. requestAnimationFrame (rAF) Render Loop (Optimized with responsive LERP and throttled DOM updates)
   useEffect(() => {
     if (!loadingComplete) return;
 
@@ -280,27 +167,76 @@ export default function App() {
 
       const ctx = canvas.getContext('2d');
       const images = imagesRef.current;
-      const currentFrame = currentFrameRef.current;
+      
+      // Interpolate the frame index smoothly
+      const targetFrame = currentFrameRef.current;
+      const diff = targetFrame - animatedFrameRef.current;
+      
+      // 0.15 coefficient filters out micro-stutters from slow scrolls without lag
+      if (Math.abs(diff) < 0.01) {
+        animatedFrameRef.current = targetFrame;
+      } else {
+        animatedFrameRef.current += diff * 0.07;
+      }
 
+      const currentFrame = Math.max(0, Math.min(TOTAL_FRAMES - 1, Math.round(animatedFrameRef.current)));
+
+      // 1. Draw frame ONLY if rounded frame index changes (throttled to canvas update rate)
       if (ctx && images[currentFrame] && currentFrame !== drawnFrameRef.current) {
         const img = images[currentFrame];
-        
-        // Match canvas dimensions to the image source dimensions for maximum resolution
-        if (canvas.width !== img.width || canvas.height !== img.height) {
-          canvas.width = img.width;
-          canvas.height = img.height;
-        }
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, 1280, 720);
+        ctx.drawImage(img, 0, 0, 1280, 720);
         drawnFrameRef.current = currentFrame;
-
-        // Apply smooth scale and rotation based on scroll progress (GPU accelerated)
-        const progress = scrollProgressRef.current;
-        const rotation = -3.5 + progress * 9.5; // subtle rotation sweep (-3.5deg to +6deg)
-        const scale = 1.05 - progress * 0.05;   // zoom from 1.05 to 1.0
-        canvas.style.transform = `translate(-50%, -50%) rotate(${rotation}deg) scale(${scale})`;
       }
+
+      // 2. Perform smooth transform and progress updates on EVERY frame (fluid 60Hz/120Hz continuous)
+      const easedProgress = animatedFrameRef.current / (TOTAL_FRAMES - 1);
+      
+      // Smooth scale and rotation (GPU accelerated, continuous)
+      const rotation = -3.5 + easedProgress * 9.5; // subtle rotation sweep (-3.5deg to +6deg)
+      const scale = 1.05 - easedProgress * 0.05;   // zoom from 1.05 to 1.0
+      canvas.style.transform = `translate(-50%, -50%) rotate(${rotation}deg) scale(${scale})`;
+
+      // Smooth progress bar width
+      if (progressBarRef.current) {
+        progressBarRef.current.style.width = `${easedProgress * 100}%`;
+      }
+
+      // Phased cards visibility driven by continuous eased progress (optimized check)
+      const togglePhase = (ref: React.RefObject<HTMLDivElement>, active: boolean) => {
+        if (ref.current) {
+          const hasClass = ref.current.classList.contains('visible');
+          if (active && !hasClass) {
+            ref.current.classList.add('visible');
+          } else if (!active && hasClass) {
+            ref.current.classList.remove('visible');
+          }
+        }
+      };
+
+      togglePhase(phase1Ref, easedProgress >= 0.00 && easedProgress <= 0.22);
+      togglePhase(phase2Ref, easedProgress >= 0.26 && easedProgress <= 0.45);
+      togglePhase(phase3Ref, easedProgress >= 0.50 && easedProgress <= 0.68);
+      togglePhase(phase4Ref, easedProgress >= 0.74 && easedProgress <= 0.94);
+
+      // Starting Floating Badges driven by continuous eased progress (optimized check)
+      const isStart = easedProgress >= 0.00 && easedProgress <= 0.22;
+      
+      const toggleBadge = (ref: React.RefObject<HTMLDivElement>, active: boolean) => {
+        if (ref.current) {
+          const isVisible = ref.current.classList.contains('opacity-100');
+          if (active && !isVisible) {
+            ref.current.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+            ref.current.classList.add('opacity-100', 'scale-100');
+          } else if (!active && isVisible) {
+            ref.current.classList.remove('opacity-100', 'scale-100');
+            ref.current.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+          }
+        }
+      };
+
+      toggleBadge(leftBadgeRef, isStart);
+      toggleBadge(rightBadgeRef, isStart);
 
       rAFId = requestAnimationFrame(tick);
     };
@@ -312,813 +248,259 @@ export default function App() {
     };
   }, [loadingComplete]);
 
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newsletterEmail.trim() !== '') {
-      setNewsletterSubscribed(true);
-      setNewsletterEmail('');
-    }
-  };
 
-  const currentRoutine = ROUTINES[activePlannerTab];
 
   return (
-    <div className="w-full min-h-screen bg-[#06070b]">
-      {/* 1. PRELOADER SCREEN */}
+    <div className="relative bg-[#090909] text-white min-h-screen">
+      {/* Scroll Progress Indicator */}
+      {/* <div className="fixed top-0 left-0 right-0 h-[3px] bg-neutral-950 z-[999] pointer-events-none">
+      </div> */}
+
+      {/* Loader Overlay */}
       {showLoader && (
         <div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#06070b] transition-opacity duration-700 overflow-hidden"
           style={{ opacity: loaderOpacity }}
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#090909] transition-opacity duration-700 ease-in-out"
         >
-          {/* Animated Background blobs to make glassmorphism look stunning */}
-          <div className="absolute top-[-10%] right-[-10%] w-[280px] h-[280px] sm:w-[400px] sm:h-[400px] bg-emerald-500/10 rounded-full blur-[80px] sm:blur-[120px] animate-pulse" />
-          <div className="absolute bottom-[-10%] left-[-10%] w-[280px] h-[280px] sm:w-[400px] sm:h-[400px] bg-violet-500/10 rounded-full blur-[80px] sm:blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
-
-          {/* Glass Card */}
-          <div className="w-[88%] max-w-sm liquid-glass-premium rounded-3xl p-6 sm:p-10 border border-white/10 flex flex-col items-center text-center shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden">
-            {/* Logo Badge */}
-            <div className="relative mb-5 flex items-center justify-center">
-              <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-md animate-ping scale-75" />
-              <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-inner">
-                <Infinity size={28} className="text-emerald-400" strokeWidth={1.5} />
-              </div>
+          <div className="flex flex-col items-center text-center">
+            <h1 className="text-4xl md:text-6xl font-light tracking-[0.4em] text-white brand-font select-none">
+              MONAC
+            </h1>
+          </div>
+          <div className="absolute bottom-24 flex flex-col items-center w-64 md:w-80">
+            <div className="flex justify-between w-full mb-3 text-[10px] text-neutral-500 font-mono tracking-[0.2em]">
+              <span>PRELOADING SCENE</span>
+              <span>{Math.round((loadedCount / TOTAL_FRAMES) * 100)}%</span>
             </div>
-
-            <h2 className="text-white text-lg sm:text-2xl font-semibold tracking-tight mb-2">
-              Equilibrium
-            </h2>
-            <p className="text-white/40 text-[11px] sm:text-xs leading-relaxed max-w-xs mb-6">
-              Aligning routines, insights, and expert advisors for your personalized wellness journey.
-            </p>
-
-            {/* Circular Progress & Info */}
-            <div className="w-full space-y-3 mb-6">
-              {/* Progress Bar Container */}
-              <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden relative border border-white/5">
-                <div
-                  className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-violet-500 h-full rounded-full transition-all duration-300 ease-out shadow-[0_0_8px_rgba(52,211,153,0.5)]"
-                  style={{ width: `${(loadedCount / TOTAL_FRAMES) * 100}%` }}
-                />
-              </div>
-              
-              {/* Loading text percentage & status */}
-              <div className="flex items-center justify-between text-[10px] text-white/50 font-medium px-1">
-                <span className="animate-pulse flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  {loadedCount < TOTAL_FRAMES ? 'Syncing biological models...' : 'Sanctuary prepared'}
-                </span>
-                <span className="text-emerald-400 font-mono font-semibold">
-                  {Math.round((loadedCount / TOTAL_FRAMES) * 100)}%
-                </span>
-              </div>
-            </div>
-
-            {/* Dynamic Step indicators */}
-            <div className="w-full border-t border-white/5 pt-4 text-left space-y-2">
-              <div className="flex items-center gap-2 text-[10px] text-white/60">
-                <span className="text-emerald-400">✓</span>
-                <span>Initialized Chrono-Engine</span>
-              </div>
-              <div className="flex items-center gap-2 text-[10px]">
-                {loadedCount >= 100 ? (
-                  <span className="text-emerald-400">✓</span>
-                ) : (
-                  <span className="w-2 h-2 rounded-full border border-white/20 border-t-emerald-400 animate-spin" />
-                )}
-                <span className={loadedCount >= 100 ? 'text-white/60' : 'text-white/30'}>
-                  Synchronizing Video Frames ({loadedCount}/{TOTAL_FRAMES})
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-[10px]">
-                {loadedCount === TOTAL_FRAMES ? (
-                  <span className="text-emerald-400">✓</span>
-                ) : (
-                  <span className="w-1.5 h-1.5 rounded-full bg-white/10" />
-                )}
-                <span className={loadedCount === TOTAL_FRAMES ? 'text-white/60' : 'text-white/30'}>
-                  Pre-rendering advisory interfaces
-                </span>
-              </div>
+            <div className="w-full h-[1px] bg-neutral-900 overflow-hidden rounded-full">
+              <div
+                className="h-full bg-amber-500/80 transition-all duration-300 ease-out"
+                style={{ width: `${(loadedCount / TOTAL_FRAMES) * 100}%` }}
+              />
             </div>
           </div>
         </div>
       )}
 
-      {/* 2. SCROLL PROGRESS INDICATOR */}
-      {loadingComplete && (
-        <div className="fixed top-0 left-0 right-0 h-1 z-50">
-          <div
-            ref={progressBarRef}
-            className="h-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-violet-500 transition-all duration-100 ease-out shadow-[0_0_10px_rgba(16,185,129,0.5)]"
-            style={{ width: '0%' }}
-          />
-        </div>
-      )}
-
-      {/* 3. FLOATING NAVBAR */}
-      <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-6 sm:px-12 py-5 bg-gradient-to-b from-[#06070b]/80 to-transparent backdrop-blur-sm">
-        {/* Logo */}
-        <div className="flex items-center gap-2 text-white font-medium text-lg cursor-pointer">
-          <Infinity size={26} className="text-emerald-500" strokeWidth={1.5} />
-          <span className="tracking-tight font-semibold">Equilibrium</span>
-        </div>
-
-        {/* Navigation pill */}
-        <div className="hidden md:flex liquid-glass items-center gap-1 rounded-full px-2 py-1.5">
-          {navLinks.map((link) => (
-            <button
-              key={link.label}
-              className={
-                'px-4 py-2 rounded-full text-xs font-medium tracking-wide transition-all duration-300 ' +
-                (link.active
-                  ? 'bg-white/10 text-white shadow-sm'
-                  : 'text-white/60 hover:text-white hover:bg-white/5')
-              }
-            >
-              {link.label}
-            </button>
-          ))}
-        </div>
-
-        {/* CTAs (desktop) */}
-        <div className="hidden md:flex items-center gap-4">
-          <button className="text-white/80 hover:text-white text-xs font-semibold tracking-wide transition-colors">
-            Log in
-          </button>
-          <button className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-xs font-semibold px-5 py-2.5 rounded-full hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all duration-300">
-            Begin Now
-          </button>
-        </div>
-
-        {/* Mobile toggle */}
+      {/* Elegant Header */}
+      <header className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-6 py-6 md:px-12 bg-gradient-to-b from-black/60 to-transparent">
         <button
-          className="md:hidden liquid-glass text-white p-2 rounded-full"
-          onClick={() => setMenuOpen((o) => !o)}
-          aria-label="Toggle menu"
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="text-white hover:text-amber-500 transition-colors p-2"
+          aria-label="Toggle Menu"
         >
-          {menuOpen ? <X size={18} /> : <Menu size={18} />}
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {menuOpen ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 8h16M4 16h16" />
+            )}
+          </svg>
         </button>
-      </nav>
 
-      {/* Mobile menu overlay */}
-      {menuOpen && (
-        <div className="fixed inset-x-4 top-[76px] z-40 md:hidden liquid-glass-premium rounded-3xl p-6 flex flex-col gap-2">
-          {navLinks.map((link) => (
-            <button
-              key={link.label}
-              className="flex items-center justify-between w-full px-4 py-3.5 rounded-xl text-sm font-medium text-white/80 hover:text-white hover:bg-white/5 transition-all"
-            >
-              <span>{link.label}</span>
-              <ChevronDown size={14} className="text-white/40" />
-            </button>
-          ))}
-          <div className="flex gap-3 mt-4 pt-4 border-t border-white/10">
-            <button className="flex-1 liquid-glass text-white text-xs font-semibold py-3 rounded-full hover:bg-white/5 transition-colors">
-              Log in
-            </button>
-            <button className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-xs font-semibold py-3 rounded-full transition-all">
-              Begin Now
-            </button>
-          </div>
+        <a href="#" className="absolute left-1/2 -translate-x-1/2 select-none">
+          <span className="text-xl md:text-2xl font-light tracking-[0.35em] text-white hover:text-amber-500 transition-colors">
+            MONAC
+          </span>
+        </a>
+
+        <div className="flex items-center gap-4">
+          <button className="text-white hover:text-amber-500 transition-colors p-2" aria-label="Search">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+          <button className="text-white hover:text-amber-500 transition-colors p-2 relative" aria-label="Shopping Cart">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-amber-500 rounded-full animate-ping" />
+          </button>
         </div>
-      )}
+      </header>
 
-      {/* 4. SCROLL CONTAINER RUNWAY */}
-      <div ref={runwayRef} className="relative w-full h-[400vh]">
-        {/* Sticky Wrapper */}
-        <div className="sticky top-0 w-full h-screen overflow-hidden bg-[#06070b]">
-          {/* Canvas Rendering Box */}
-          <canvas
-            ref={canvasRef}
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-screen h-screen object-cover canvas-mask"
-          />
-
-          {/* Floating starting badges */}
-          <div ref={leftBadgeRef} className="absolute top-28 left-6 sm:left-12 lg:left-24 hidden md:flex items-center gap-2 liquid-glass px-4 py-2.5 rounded-full border border-white/5 text-xs text-white/80 transition-all duration-700 opacity-100 scale-100">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-            <span className="font-medium">Evidence-Based Methodology</span>
-          </div>
-
-          <div ref={rightBadgeRef} className="absolute top-28 right-6 sm:right-12 lg:right-24 hidden md:flex items-center gap-2 liquid-glass px-4 py-2.5 rounded-full border border-white/5 text-xs text-white/80 transition-all duration-700 opacity-100 scale-100">
-            <Globe size={12} className="text-cyan-400" />
-            <span className="font-medium">100% Privacy-Encrypted Logs</span>
-          </div>
-
-          {/* Active Overlay: Phase 1 (Intro) */}
-          <div
-            ref={phase1Ref}
-            className="absolute inset-0 flex flex-col items-center justify-end pb-24 md:pb-28 px-6 text-center scroll-phase-card visible"
-          >
-            <div className="max-w-2xl rounded-3xl p-6 md:p-8">
-              <span className="inline-flex items-center gap-1 bg-white/10 px-3 py-1 rounded-full text-emerald-400 text-[10px] font-semibold tracking-wider uppercase mb-4">
-                <Sparkles size={10} /> Introducing Equilibrium
-              </span>
-              <h1 className="text-white text-4xl sm:text-5xl md:text-6xl font-medium tracking-tight leading-tight mb-4">
-                Live Better, Feel Whole Every Day
-              </h1>
-              <p className="text-white/70 text-sm md:text-base leading-relaxed max-w-lg mx-auto mb-6">
-                Take charge of how you feel with a companion built for your journey—build routines, track your growth, and unlock tailored insights.
-              </p>
-              <div className="flex items-center justify-center gap-3">
-                <a
-                  href="#wellness-hub"
-                  className="bg-white text-black text-xs sm:text-sm font-semibold px-6 py-3 rounded-full hover:bg-white/90 transition-colors cursor-pointer"
-                >
-                  Explore Pillars
-                </a>
-                <a
-                  href="#daily-planner"
-                  className="liquid-glass text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-full hover:bg-white/5 transition-colors cursor-pointer"
-                >
-                  View Planner
-                </a>
-              </div>
-            </div>
-            {/* Scroll Assist Hint */}
-            <div className="absolute bottom-6 flex flex-col items-center gap-1 text-white/40 text-[10px] uppercase tracking-widest animate-bounce">
-              <span>Scroll down to enter</span>
-              <ArrowDown size={12} className="text-emerald-500" />
-            </div>
-          </div>
-
-          {/* Active Overlay: Phase 2 (Mindful Routines) */}
-          <div
-            ref={phase2Ref}
-            className="absolute inset-0 flex items-center justify-center md:justify-start px-6 md:pl-24 lg:pl-32 scroll-phase-card"
-          >
-            <div className="w-full max-w-md p-4 sm:p-6 text-left">
-              <div className="bg-emerald-500/10 text-emerald-400 p-2 rounded-xl w-fit mb-4 sm:mb-5">
-                <Compass size={20} />
-              </div>
-              <h2 className="text-white text-xl sm:text-3xl font-medium tracking-tight mb-2 sm:mb-3">
-                Mindful Routines: <br/>
-                <span className="text-gradient-green-blue">Consistency Redefined</span>
-              </h2>
-              <p className="text-white/60 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6">
-                Consistency builds lifestyle change. Cultivate wellness pathways through custom routines designed to match your body's circadian clock, lowering stress levels and boosting output.
-              </p>
-              <ul className="space-y-2 mb-4 sm:mb-6 hidden sm:block">
-                <li className="flex items-start gap-2.5 text-xs text-white/80">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
-                  <span>Somatic timers to anchor behavior paths</span>
-                </li>
-                <li className="flex items-start gap-2.5 text-xs text-white/80">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
-                  <span>Habit chains built on daily science principles</span>
-                </li>
-              </ul>
-              <a
-                href="#daily-planner"
-                className="inline-flex items-center gap-1.5 text-emerald-400 text-xs font-semibold hover:text-emerald-300 transition-colors"
-              >
-                Launch the Interactive Planner <ArrowRight size={14} />
-              </a>
-            </div>
-          </div>
-
-          {/* Active Overlay: Phase 3 (Growth Analytics) */}
-          <div
-            ref={phase3Ref}
-            className="absolute inset-0 flex items-center justify-center md:justify-end px-6 md:pr-24 lg:pr-32 scroll-phase-card"
-          >
-            <div className="w-full max-w-md p-4 sm:p-6 text-left">
-              <div className="bg-violet-500/10 text-violet-400 p-2 rounded-xl w-fit mb-4 sm:mb-5">
-                <Activity size={20} />
-              </div>
-              <h2 className="text-white text-xl sm:text-3xl font-medium tracking-tight mb-2 sm:mb-3">
-                Growth Analytics: <br/>
-                <span className="text-gradient-purple-blue">Visualize Progress</span>
-              </h2>
-              <p className="text-white/60 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6">
-                Understand the shifts in your baseline well-being. Our analytical dashboard tracks mood indexes, heart rate variability patterns, and circadian alignment metrics.
-              </p>
-              <div className="grid grid-cols-2 gap-3 mb-4 sm:mb-6 bg-white/5 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-white/5">
-                <div>
-                  <span className="text-white/40 text-[9px] uppercase tracking-wider block">Stress Index</span>
-                  <span className="text-violet-400 text-sm sm:text-base font-semibold">-34% Avg</span>
-                </div>
-                <div>
-                  <span className="text-white/40 text-[9px] uppercase tracking-wider block">Sleep Stability</span>
-                  <span className="text-emerald-400 text-sm sm:text-base font-semibold">+41% Inc</span>
-                </div>
-              </div>
-              <a
-                href="#wellness-hub"
-                className="inline-flex items-center gap-1.5 text-violet-400 text-xs font-semibold hover:text-violet-300 transition-colors"
-              >
-                Browse Wellness Pillars <ArrowRight size={14} />
-              </a>
-            </div>
-          </div>
-
-          {/* Active Overlay: Phase 4 (Tailored Insights) */}
-          <div
-            ref={phase4Ref}
-            className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center scroll-phase-card"
-          >
-            <div className="w-full max-w-xl p-6 sm:p-8 text-center">
-              <div className="bg-cyan-500/10 text-cyan-400 p-2 rounded-xl w-fit mx-auto mb-4 sm:mb-5">
-                <BrainCircuit size={22} />
-              </div>
-              <h2 className="text-white text-2xl sm:text-4xl font-medium tracking-tight mb-3 sm:mb-4">
-                Personalized Insights: <br/>
-                <span className="text-gradient-green-blue">Driven by Circadian Science</span>
-              </h2>
-              <p className="text-white/70 text-xs sm:text-sm leading-relaxed mb-6 sm:mb-8 max-w-md mx-auto">
-                No generic programs. Equilibrium leverages medical research and behavioral logs to give you actionable triggers exactly when your body is primed for them.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-                <button className="w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-xs font-bold px-7 py-3.5 rounded-full hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all">
-                  Begin Free Evaluation
-                </button>
-                <a
-                  href="#advisory-board"
-                  className="w-full sm:w-auto liquid-glass text-white text-xs font-semibold px-7 py-3.5 rounded-full hover:bg-white/5 transition-colors"
-                >
-                  Meet Our Scientists
-                </a>
-              </div>
-            </div>
+      {/* Full-screen Menu Overlay */}
+      <div
+        className={`fixed inset-0 z-35 bg-black/95 backdrop-blur-lg transition-all duration-700 ease-in-out ${
+          menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        <div className="flex flex-col items-center justify-center h-full gap-8 text-center">
+          <nav className="flex flex-col gap-6 text-lg md:text-2xl font-light tracking-[0.25em] text-white">
+            <a href="#" onClick={() => setMenuOpen(false)} className="hover:text-amber-500 transition-colors">COLLECTION</a>
+            <a href="#" onClick={() => setMenuOpen(false)} className="hover:text-amber-500 transition-colors">THE OLFACTORY NOTES</a>
+            <a href="#" onClick={() => setMenuOpen(false)} className="hover:text-amber-500 transition-colors">CRAFTSMANSHIP</a>
+            <a href="#" onClick={() => setMenuOpen(false)} className="hover:text-amber-500 transition-colors">PRE-ORDER</a>
+          </nav>
+          <div className="w-12 h-[1px] bg-amber-500/30 my-4" />
+          <div className="text-[10px] tracking-[0.2em] text-neutral-500">
+            MONAC HAUTE PARFUMERIE © 2026
           </div>
         </div>
       </div>
 
-      {/* 5. SECTION A: WELLNESS HUB */}
-      <section id="wellness-hub" className="relative py-24 md:py-32 bg-[#06070b] overflow-hidden">
-        {/* Background ambient glows */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-500/5 rounded-full blur-3xl pointer-events-none" />
+      {/* Floating Badges */}
+      <div
+        ref={leftBadgeRef}
+        className="badge-left pointer-events-none fixed top-1/2 left-8 md:left-12 z-20 text-[9px] md:text-[10px] tracking-[0.35em] font-light text-neutral-500 border-b border-amber-500/20 pb-2 uppercase origin-left"
+      >
+        MONAC
+      </div>
+      <div
+        ref={rightBadgeRef}
+        className="badge-right pointer-events-none fixed top-1/2 right-8 md:right-12 z-20 text-[9px] md:text-[10px] tracking-[0.35em] font-light text-neutral-500 border-b border-amber-500/20 pb-2 uppercase origin-right"
+      >
+        EAU DE PARFUM
+      </div>
 
-        <div className="section-container relative z-10">
-          {/* Header */}
-          <div className="max-w-xl mb-16 md:mb-20">
-            <span className="text-emerald-400 text-xs font-bold tracking-widest uppercase block mb-3">
-              Comprehensive Growth
-            </span>
-            <h2 className="text-white text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight mb-4">
-              Explore Our Core Wellness Pillars
-            </h2>
-            <p className="text-white/60 text-sm leading-relaxed">
-              We focus on four foundational pillars to balance daily biological rhythms, creating a sustainable foundation for growth.
-            </p>
-          </div>
+      {/* Scroll Runway */}
+      <div ref={runwayRef} className="relative w-full h-[450vh] bg-[#090909]">
+        {/* Sticky Canvas Frame Container */}
+        <div className="sticky top-0 left-0 w-full h-screen overflow-hidden flex items-center justify-center z-10">
+          <canvas
+            ref={canvasRef}
+            id="frame-canvas"
+            width={1280}
+            height={720}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-auto h-[65vh] md:h-auto md:w-full max-w-[1280px] aspect-video object-contain"
+          />
+        </div>
 
-          {/* Grid layout */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-            {/* Card 1: Mindfulness */}
-            <div className="liquid-glass rounded-3xl p-6 sm:p-8 flex flex-col justify-between hover-glow transition-all duration-500 border border-white/5 group">
-              <div>
-                <div className="overflow-hidden rounded-2xl mb-6 relative aspect-video">
-                  <img
-                    src="/images/wellness_mindfulness.png"
-                    alt="Mindfulness"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
-                    <Compass size={13} className="text-emerald-400" />
-                    <span className="text-[10px] text-white/90 font-medium tracking-wide">MINDFULNESS</span>
-                  </div>
-                </div>
-                <h3 className="text-white text-xl font-semibold mb-3 group-hover:text-emerald-400 transition-colors">
-                  Mindfulness Space
-                </h3>
-                <p className="text-white/60 text-xs sm:text-sm leading-relaxed mb-6">
-                  Lower emotional reactivity and clear psychological noise. Access scientifically evaluated auditory environments, guided breathing sessions, and localized muscle release protocols designed to calm the nervous system.
-                </p>
-              </div>
-              <div className="flex items-center justify-between border-t border-white/5 pt-5 mt-auto">
-                <span className="text-white/40 text-[11px] font-medium">12 Guided Modules</span>
-                <span className="text-emerald-400 text-xs font-bold flex items-center gap-1 group-hover:underline">
-                  Launch Space <ArrowRight size={12} />
-                </span>
-              </div>
+        {/* Phase Overlays */}
+        {/* Phase 1: Product Intro */}
+        <div
+          ref={phase1Ref}
+          className="phase-card fixed bottom-10 left-6 right-6 md:bottom-16 md:left-16 md:right-auto md:top-auto md:translate-y-0 z-20 max-w-sm md:max-w-md p-4 flex flex-col gap-4 text-center md:text-left items-center md:items-start"
+        >
+          <span className="text-amber-500/80 text-[10px] font-semibold tracking-[0.25em] uppercase font-cinzel">MONAC / Signature</span>
+          <p className="text-sm text-neutral-400 font-light leading-relaxed font-playfair italic">
+            "A sensory exploration of absolute symmetry. Balanced perfectly between the ephemeral and the eternal, MONAC is designed to float with you through time."
+          </p>
+          <div className="w-12 h-[1px] bg-amber-500/30 mt-2" />
+        </div>
+
+        {/* Phase 2: Scent Profile */}
+        <div
+          ref={phase2Ref}
+          className="phase-card fixed bottom-10 left-6 right-6 md:bottom-16 md:right-16 md:left-auto md:top-auto md:translate-y-0 z-20 max-w-sm md:max-w-md p-4 flex flex-col gap-4 text-center md:text-left items-center md:items-start"
+        >
+          <span className="text-amber-500/80 text-[10px] font-semibold tracking-[0.25em] uppercase font-cinzel">The Scent Profile</span>
+          <h2 className="text-2xl md:text-3xl font-light text-white leading-tight font-cinzel">THE NOTES</h2>
+          <div className="flex flex-col gap-4 mt-2 text-left w-full">
+            <div className="flex flex-col border-l border-amber-500/20 pl-3">
+              <span className="text-amber-500 text-[10px] tracking-[0.15em] font-semibold uppercase font-cinzel">Top Notes</span>
+              <span className="text-sm text-white font-medium mt-0.5 font-playfair italic">Calabrian Bergamot & Pink Pepper</span>
+              <span className="text-xs text-neutral-400 mt-1 font-light">A crisp, invigorating opening that captures the light.</span>
             </div>
-
-            {/* Card 2: Sleep Recovery */}
-            <div className="liquid-glass rounded-3xl p-6 sm:p-8 flex flex-col justify-between hover-glow-purple transition-all duration-500 border border-white/5 group">
-              <div>
-                <div className="overflow-hidden rounded-2xl mb-6 relative aspect-video">
-                  <img
-                    src="/images/wellness_sleep.png"
-                    alt="Sleep Recovery"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
-                    <Moon size={13} className="text-violet-400" />
-                    <span className="text-[10px] text-white/90 font-medium tracking-wide">SLEEP RECOVERY</span>
-                  </div>
-                </div>
-                <h3 className="text-white text-xl font-semibold mb-3 group-hover:text-violet-400 transition-colors">
-                  Nightly Sleep Sync
-                </h3>
-                <p className="text-white/60 text-xs sm:text-sm leading-relaxed mb-6">
-                  Optimized rest is essential for cellular rejuvenation. Align your evening routines to prompt natural melatonin release, adjust bedroom environments, and log structural markers for deeper, restorative sleep cycles.
-                </p>
-              </div>
-              <div className="flex items-center justify-between border-t border-white/5 pt-5 mt-auto">
-                <span className="text-white/40 text-[11px] font-medium">Circadian Automations</span>
-                <span className="text-violet-400 text-xs font-bold flex items-center gap-1 group-hover:underline">
-                  Review Sleep Hub <ArrowRight size={12} />
-                </span>
-              </div>
+            <div className="flex flex-col border-l border-amber-500/20 pl-3">
+              <span className="text-amber-500 text-[10px] tracking-[0.15em] font-semibold uppercase font-cinzel">Heart Notes</span>
+              <span className="text-sm text-white font-medium mt-0.5 font-playfair italic">French Lavender & Incense</span>
+              <span className="text-xs text-neutral-400 mt-1 font-light">A calm, meditative core that adds a layer of mystery.</span>
             </div>
-
-            {/* Card 3: Movement */}
-            <div className="liquid-glass rounded-3xl p-6 sm:p-8 flex flex-col justify-between hover-glow transition-all duration-500 border border-white/5 group">
-              <div>
-                <div className="overflow-hidden rounded-2xl mb-6 relative aspect-video">
-                  <img
-                    src="/images/wellness_movement.png"
-                    alt="Movement & Flow"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
-                    <Zap size={13} className="text-emerald-400" />
-                    <span className="text-[10px] text-white/90 font-medium tracking-wide">PHYSICAL MOVEMENT</span>
-                  </div>
-                </div>
-                <h3 className="text-white text-xl font-semibold mb-3 group-hover:text-emerald-400 transition-colors">
-                  Flow State Movement
-                </h3>
-                <p className="text-white/60 text-xs sm:text-sm leading-relaxed mb-6">
-                  Exercise mapped to your body's energy timelines. Discover dynamic movement practices and low-impact somatic releases designed to optimize physical output while limiting elevated inflammatory cortisol spikes.
-                </p>
-              </div>
-              <div className="flex items-center justify-between border-t border-white/5 pt-5 mt-auto">
-                <span className="text-white/40 text-[11px] font-medium">Tailored Routines</span>
-                <span className="text-emerald-400 text-xs font-bold flex items-center gap-1 group-hover:underline">
-                  Access Movements <ArrowRight size={12} />
-                </span>
-              </div>
-            </div>
-
-            {/* Card 4: Clean Nutrition */}
-            <div className="liquid-glass rounded-3xl p-6 sm:p-8 flex flex-col justify-between hover-glow-purple transition-all duration-500 border border-white/5 group">
-              <div>
-                <div className="overflow-hidden rounded-2xl mb-6 relative aspect-video">
-                  <img
-                    src="/images/wellness_nutrition.png"
-                    alt="Nutrition"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
-                    <Heart size={13} className="text-violet-400" />
-                    <span className="text-[10px] text-white/90 font-medium tracking-wide">CLEAN NUTRITION</span>
-                  </div>
-                </div>
-                <h3 className="text-white text-xl font-semibold mb-3 group-hover:text-violet-400 transition-colors">
-                  Mindful Nutrition
-                </h3>
-                <p className="text-white/60 text-xs sm:text-sm leading-relaxed mb-6">
-                  Fuel your cells correctly. Discover dietary principles designed to limit blood sugar volatility, manage cognitive fatigue, and enhance metabolic efficiency based on simple biological cycles.
-                </p>
-              </div>
-              <div className="flex items-center justify-between border-t border-white/5 pt-5 mt-auto">
-                <span className="text-white/40 text-[11px] font-medium">Custom Fuel Library</span>
-                <span className="text-violet-400 text-xs font-bold flex items-center gap-1 group-hover:underline">
-                  Open Nutrition Library <ArrowRight size={12} />
-                </span>
-              </div>
+            <div className="flex flex-col border-l border-amber-500/20 pl-3">
+              <span className="text-amber-500 text-[10px] tracking-[0.15em] font-semibold uppercase font-cinzel">Base Notes</span>
+              <span className="text-sm text-white font-medium mt-0.5 font-playfair italic">Indonesian Patchouli & Amberwood</span>
+              <span className="text-xs text-neutral-400 mt-1 font-light">A warm, resinous foundation that lingers elegantly.</span>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* 6. SECTION B: DAILY ROUTINE PLANNER */}
-      <section id="daily-planner" className="relative py-24 md:py-32 bg-[#0c0e17] border-y border-white/5">
-        <div className="section-container">
-          {/* Header */}
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-emerald-400 text-xs font-bold tracking-widest uppercase block mb-3">
-              Interactive Blueprint
-            </span>
-            <h2 className="text-white text-3xl sm:text-4xl font-medium tracking-tight mb-4">
-              Your Daily Circadian Engine
-            </h2>
-            <p className="text-white/60 text-sm leading-relaxed">
-              Explore how routine blocks change across the day. Click on each phase below to inspect recommended habits and physiological impacts.
-            </p>
+        {/* Phase 3: Craftsmanship */}
+        <div
+          ref={phase3Ref}
+          className="phase-card fixed bottom-10 left-6 right-6 md:bottom-16 md:left-16 md:right-auto md:top-auto md:translate-y-0 z-20 max-w-sm md:max-w-md p-4 flex flex-col gap-4 text-center md:text-left items-center md:items-start"
+        >
+          <span className="text-amber-500/80 text-[10px] font-semibold tracking-[0.25em] uppercase font-cinzel">Artisanal Design</span>
+          <h2 className="text-2xl md:text-3xl font-light text-white leading-tight font-cinzel">CRAFTSMANSHIP</h2>
+          <p className="text-sm text-neutral-400 font-light leading-relaxed font-playfair italic">
+            Every bottle of MONAC is a piece of art. Formed from ultra-heavy glass, hand-polished to catch light, and crowned with a bespoke magnetic wooden cap that snaps perfectly into position.
+          </p>
+          <div className="flex gap-4 mt-2 w-full">
+            <div className="flex flex-col flex-1 p-3 rounded-lg bg-neutral-950/40 border border-white/5 text-left">
+              <span className="text-amber-500 text-[9px] font-semibold tracking-[0.1em] uppercase font-cinzel">Bottle</span>
+              <span className="text-xs text-neutral-300 mt-1">French Lead-Free Glass</span>
+            </div>
+            <div className="flex flex-col flex-1 p-3 rounded-lg bg-neutral-950/40 border border-white/5 text-left">
+              <span className="text-amber-500 text-[9px] font-semibold tracking-[0.1em] uppercase font-cinzel">Cap</span>
+              <span className="text-xs text-neutral-300 mt-1">Bespoke Magnetic Wood</span>
+            </div>
           </div>
+        </div>
 
-          {/* Interactive Planner Dashboard */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Tabs (Left Column) */}
-            <div className="lg:col-span-4 flex flex-row lg:flex-col gap-3 overflow-x-auto pb-4 lg:pb-0 scrollbar-none">
-              {(['morning', 'afternoon', 'evening', 'night'] as const).map((tab) => (
+        {/* Phase 4: Reservation & Checkout CTA */}
+        <div
+          ref={phase4Ref}
+          className="phase-card fixed bottom-10 left-6 right-6 md:bottom-16 md:right-16 md:left-auto md:top-auto md:translate-y-0 z-20 max-w-sm md:max-w-md p-4 flex flex-col gap-6 text-center md:text-left items-center md:items-start"
+        >
+          <span className="text-amber-500/80 text-[10px] font-semibold tracking-[0.25em] uppercase font-cinzel">Exclusive Release</span>
+          <h2 className="text-2xl md:text-3xl font-light text-white leading-tight font-cinzel">OWN THE EXPERIENCE</h2>
+          
+          <div className="flex flex-col gap-4 w-full text-left">
+            <div className="flex justify-between items-center p-3 rounded-xl border border-amber-500/20 bg-amber-500/5">
+              <div className="flex flex-col">
+                <span className="text-xs text-white font-medium font-cinzel">MONAC Eau de Parfum</span>
+                <span className="text-[10px] text-neutral-400 mt-0.5">Select Size</span>
+              </div>
+              <div className="flex gap-2">
                 <button
-                  key={tab}
-                  onClick={() => setActivePlannerTab(tab)}
-                  className={`flex-shrink-0 flex items-center gap-3 px-6 py-4 rounded-2xl text-left border transition-all duration-300 w-auto lg:w-full ${
-                    activePlannerTab === tab
-                      ? 'bg-emerald-500/10 border-emerald-500/30 text-white shadow-lg shadow-emerald-500/5'
-                      : 'bg-white/5 border-white/5 text-white/50 hover:bg-white/10 hover:text-white'
+                  onClick={() => setActivePlannerTab('morning')}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold tracking-widest border transition-all font-cinzel ${
+                    activePlannerTab === 'morning'
+                      ? 'bg-amber-500 border-amber-500 text-black'
+                      : 'border-white/10 hover:border-white/20 text-white'
                   }`}
                 >
-                  <div className={`p-2 rounded-xl ${activePlannerTab === tab ? 'bg-emerald-500/25 text-emerald-300' : 'bg-white/5 text-white/40'}`}>
-                    {tab === 'morning' && <Clock size={16} />}
-                    {tab === 'afternoon' && <Zap size={16} />}
-                    {tab === 'evening' && <Compass size={16} />}
-                    {tab === 'night' && <Moon size={16} />}
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold block capitalize">{tab} Block</span>
-                    <span className="text-[10px] text-white/40 font-mono">
-                      {tab === 'morning' && '06:00 – 09:00'}
-                      {tab === 'afternoon' && '12:00 – 15:00'}
-                      {tab === 'evening' && '18:00 – 21:00'}
-                      {tab === 'night' && '22:00 – 05:00'}
-                    </span>
-                  </div>
+                  50ML
                 </button>
-              ))}
-            </div>
-
-            {/* Display Area (Right Column) */}
-            <div className="lg:col-span-8 liquid-glass rounded-3xl p-6 sm:p-8 border border-white/10 shadow-2xl relative min-h-[380px] flex flex-col justify-between transition-all duration-500">
-              <div>
-                {/* Section Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-5 mb-6">
-                  <div>
-                    <span className="text-white/40 text-[10px] uppercase font-mono tracking-wider">Active Segment</span>
-                    <h3 className={`text-2xl font-bold tracking-tight ${currentRoutine.colorClass} mt-1`}>
-                      {currentRoutine.title}
-                    </h3>
-                  </div>
-                  <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-xl w-fit">
-                    <span className="text-xs text-white/80 font-medium block">Circadian Interval</span>
-                    <span className="text-[10px] text-emerald-400 font-semibold block mt-0.5">{currentRoutine.time}</span>
-                  </div>
-                </div>
-
-                {/* Routine Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {currentRoutine.items.map((item, idx) => (
-                    <div key={idx} className="bg-white/5 border border-white/5 rounded-2xl p-5 hover:bg-white/10 transition-colors duration-300">
-                      <span className="text-emerald-400 text-xs font-bold block mb-1">{item.duration}</span>
-                      <h4 className="text-white text-sm font-semibold mb-2">{item.activity}</h4>
-                      <p className="text-white/50 text-[11px] leading-relaxed">{item.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Interactive Footer CTA */}
-              <div className="border-t border-white/5 pt-6 mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-2 text-white/50 text-xs">
-                  <BrainCircuit size={16} className="text-violet-400" />
-                  <span>Personalized based on local circadian models.</span>
-                </div>
-                <button className="w-full sm:w-auto bg-white hover:bg-white/90 text-black text-xs font-bold px-5 py-2.5 rounded-full transition-colors flex items-center justify-center gap-1">
-                  Add Segment to Engine <ArrowRight size={14} />
+                <button
+                  onClick={() => setActivePlannerTab('afternoon')}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold tracking-widest border transition-all font-cinzel ${
+                    activePlannerTab === 'afternoon'
+                      ? 'bg-amber-500 border-amber-500 text-black'
+                      : 'border-white/10 hover:border-white/20 text-white'
+                  }`}
+                >
+                  100ML
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* 7. SECTION C: SCIENTIFIC ADVISORY BOARD */}
-      <section id="advisory-board" className="py-24 md:py-32 bg-[#06070b]">
-        <div className="section-container">
-          {/* Header */}
-          <div className="max-w-2xl mx-auto text-center mb-16 md:mb-20">
-            <span className="text-emerald-400 text-xs font-bold tracking-widest uppercase block mb-3">
-              Proven Methodology
-            </span>
-            <h2 className="text-white text-3xl sm:text-4xl font-medium tracking-tight mb-4">
-              Guided by Scientific Experts
-            </h2>
-            <p className="text-white/60 text-sm leading-relaxed">
-              Equilibrium is built in coordination with behavioral scientists, neuroscientists, and circadian researchers to ensure every recommendation aligns with clinical standards.
-            </p>
-          </div>
-
-          {/* Expert Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-            {/* Expert 1 */}
-            <div className="liquid-glass rounded-3xl p-6 border border-white/5 flex flex-col items-center text-center hover:border-emerald-500/20 transition-all duration-300 group">
-              <div className="w-32 h-32 rounded-full overflow-hidden mb-6 border-2 border-white/10 group-hover:border-emerald-500/30 transition-all">
-                <img
-                  src="/images/expert_evelyn.png"
-                  alt="Dr. Evelyn Thorne"
-                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-                />
-              </div>
-              <h3 className="text-white text-lg font-bold">Dr. Evelyn Thorne</h3>
-              <span className="text-emerald-400 text-xs font-semibold block mt-1 mb-4 uppercase tracking-wider">
-                Lead Neuroscientist
+            <div className="flex justify-between items-end border-b border-white/5 pb-4">
+              <span className="text-xs text-neutral-400">Price</span>
+              <span className="text-xl font-light text-amber-500 font-cinzel">
+                {activePlannerTab === 'morning' ? '$140.00' : '$220.00'}
               </span>
-              <p className="text-white/60 text-[11px] leading-relaxed mb-6">
-                Former Harvard researcher specializing in behavioral neural loops, habit formation thresholds, and autonomic nervous responses.
-              </p>
-              <div className="mt-auto bg-white/5 px-4 py-2 rounded-xl border border-white/5 w-full">
-                <span className="text-[10px] text-white/40 block">Research focus</span>
-                <span className="text-white/80 text-[10px] font-semibold block mt-0.5">Neuroplasticity & Routines</span>
-              </div>
-            </div>
-
-            {/* Expert 2 */}
-            <div className="liquid-glass rounded-3xl p-6 border border-white/5 flex flex-col items-center text-center hover:border-violet-500/20 transition-all duration-300 group">
-              <div className="w-32 h-32 rounded-full overflow-hidden mb-6 border-2 border-white/10 group-hover:border-violet-500/30 transition-all">
-                <img
-                  src="/images/expert_marcus.png"
-                  alt="Marcus Vance"
-                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-                />
-              </div>
-              <h3 className="text-white text-lg font-bold">Marcus Vance</h3>
-              <span className="text-violet-400 text-xs font-semibold block mt-1 mb-4 uppercase tracking-wider">
-                Circadian Health Specialist
-              </span>
-              <p className="text-white/60 text-[11px] leading-relaxed mb-6">
-                Developer of dynamic biological lighting frameworks, advising organizations on melatonin regulation and sleep cycle alignment.
-              </p>
-              <div className="mt-auto bg-white/5 px-4 py-2 rounded-xl border border-white/5 w-full">
-                <span className="text-[10px] text-white/40 block">Research focus</span>
-                <span className="text-white/80 text-[10px] font-semibold block mt-0.5">Chronobiology & Recovery</span>
-              </div>
-            </div>
-
-            {/* Expert 3 */}
-            <div className="liquid-glass rounded-3xl p-6 border border-white/5 flex flex-col items-center text-center hover:border-emerald-500/20 transition-all duration-300 group">
-              <div className="w-32 h-32 rounded-full overflow-hidden mb-6 border-2 border-white/10 group-hover:border-emerald-500/30 transition-all">
-                <img
-                  src="/images/expert_sarah.png"
-                  alt="Sarah Chen"
-                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-                />
-              </div>
-              <h3 className="text-white text-lg font-bold">Sarah Chen</h3>
-              <span className="text-emerald-400 text-xs font-semibold block mt-1 mb-4 uppercase tracking-wider">
-                Behavioral Psychologist
-              </span>
-              <p className="text-white/60 text-[11px] leading-relaxed mb-6">
-                Specialist in motivational design patterns, cognitive offloading, and structural wellness habits that reduce burn-out.
-              </p>
-              <div className="mt-auto bg-white/5 px-4 py-2 rounded-xl border border-white/5 w-full">
-                <span className="text-[10px] text-white/40 block">Research focus</span>
-                <span className="text-white/80 text-[10px] font-semibold block mt-0.5">Habit Adherence Models</span>
-              </div>
             </div>
           </div>
+
+          {newsletterSubscribed ? (
+            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center text-emerald-400 text-xs tracking-wider w-full">
+              Successfully added to your reservation!
+            </div>
+          ) : (
+            <button
+              onClick={() => setNewsletterSubscribed(true)}
+              className="w-full py-4 bg-amber-500 hover:bg-amber-400 text-black font-semibold text-xs tracking-[0.2em] rounded-xl transition-all duration-300 shadow-[0_4px_20px_rgba(245,158,11,0.2)] hover:shadow-[0_4px_25px_rgba(245,158,11,0.3)] uppercase font-cinzel"
+            >
+              Reserve Bottle
+            </button>
+          )}
+          <p className="text-[9px] text-neutral-500 text-center leading-relaxed">
+            *Limited batch production. Hand-numbered bottles. Standard complimentary shipping worldwide included.
+          </p>
         </div>
-      </section>
+      </div>
 
-      {/* 8. SECTION D: STATS & TESTIMONIALS */}
-      <section className="py-24 bg-[#0c0e17] border-t border-white/5">
-        <div className="section-container">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            {/* Stats (Left) */}
-            <div className="lg:col-span-5 space-y-8">
-              <div>
-                <span className="text-emerald-400 text-xs font-bold tracking-widest uppercase block mb-3">
-                  Measurable Impact
-                </span>
-                <h2 className="text-white text-3xl sm:text-4xl font-medium tracking-tight mb-4">
-                  The Science of Compounding Growth
-                </h2>
-                <p className="text-white/60 text-sm leading-relaxed">
-                  Small, structural shifts in your routine generate significant cognitive and physical enhancements over time.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6 pt-4">
-                <div className="border-l-2 border-emerald-500 pl-4">
-                  <span className="text-white text-3xl font-bold block">94%</span>
-                  <span className="text-white/50 text-xs mt-1 block">Sleep Stability Increase</span>
-                </div>
-                <div className="border-l-2 border-violet-500 pl-4">
-                  <span className="text-white text-3xl font-bold block">15M+</span>
-                  <span className="text-white/50 text-xs mt-1 block">Routines Synced</span>
-                </div>
-                <div className="border-l-2 border-emerald-500 pl-4">
-                  <span className="text-white text-3xl font-bold block">-34%</span>
-                  <span className="text-white/50 text-xs mt-1 block">Autonomic Stress Reduction</span>
-                </div>
-                <div className="border-l-2 border-violet-500 pl-4">
-                  <span className="text-white text-3xl font-bold block">4.9★</span>
-                  <span className="text-white/50 text-xs mt-1 block">User Experience Rating</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Testimonials Card (Right) */}
-            <div className="lg:col-span-7">
-              <div className="liquid-glass rounded-3xl p-8 border border-white/10 relative">
-                <div className="flex items-center gap-1.5 text-yellow-500 mb-6">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <span key={i} className="text-sm">★</span>
-                  ))}
-                </div>
-                <blockquote className="text-white/90 text-base md:text-lg font-medium leading-relaxed mb-6 italic">
-                  "Equilibrium completely structured how I transition through my day. Working on the screen is draining, but the circadian light warnings and somatic breathing breaks have helped me sleep deeper and retain energy until late evening."
-                </blockquote>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 flex items-center justify-center text-white font-bold text-sm">
-                    EL
-                  </div>
-                  <div>
-                    <span className="text-white text-sm font-semibold block">Elena Rostova</span>
-                    <span className="text-white/40 text-xs block">Engineering Director, Berlin</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 9. SECTION E: PREMIUM FOOTER */}
-      <footer className="relative bg-[#06070b] pt-20 pb-12 border-t border-white/5">
-        <div className="section-container">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-12 pb-16 border-b border-white/5">
-            {/* Branding */}
-            <div className="lg:col-span-5 space-y-5">
-              <div className="flex items-center gap-2 text-white font-semibold text-xl">
-                <Infinity size={28} className="text-emerald-500" strokeWidth={1.5} />
-                <span>Equilibrium</span>
-              </div>
-              <p className="text-white/50 text-xs sm:text-sm leading-relaxed max-w-sm">
-                Empowering individuals to synchronize sleep patterns, physical outputs, and mental mindfulness through localized circadian alignment architectures.
-              </p>
-              <div className="flex items-center gap-3 text-white/40 text-xs">
-                <div className="flex items-center gap-1 bg-white/5 px-2.5 py-1 rounded-md border border-white/5">
-                  <Lock size={12} className="text-emerald-500" />
-                  <span>Encrpyted Logs</span>
-                </div>
-                <div className="flex items-center gap-1 bg-white/5 px-2.5 py-1 rounded-md border border-white/5">
-                  <Globe size={12} className="text-violet-500" />
-                  <span>HIPAA Aligned</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Links Block 1 */}
-            <div className="lg:col-span-2 space-y-4">
-              <h4 className="text-white text-xs font-bold uppercase tracking-wider">Features</h4>
-              <ul className="space-y-2.5 text-xs text-white/50">
-                <li><a href="#wellness-hub" className="hover:text-white transition-colors">Wellness Hub</a></li>
-                <li><a href="#daily-planner" className="hover:text-white transition-colors">Daily Planner</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Circadian Analytics</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Biofeedback Sync</a></li>
-              </ul>
-            </div>
-
-            {/* Links Block 2 */}
-            <div className="lg:col-span-2 space-y-4">
-              <h4 className="text-white text-xs font-bold uppercase tracking-wider">Advisory</h4>
-              <ul className="space-y-2.5 text-xs text-white/50">
-                <li><a href="#advisory-board" className="hover:text-white transition-colors">Scientific Board</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Clinical Studies</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Whitepaper</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Partnerships</a></li>
-              </ul>
-            </div>
-
-            {/* Newsletter Input (Right Column) */}
-            <div className="lg:col-span-3 space-y-4">
-              <h4 className="text-white text-xs font-bold uppercase tracking-wider">Newsletter</h4>
-              <p className="text-white/50 text-xs leading-relaxed">
-                Receive biological recovery tips and updates weekly.
-              </p>
-              
-              {newsletterSubscribed ? (
-                <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 p-3 rounded-2xl text-xs font-medium">
-                  ✓ Success! You have subscribed.
-                </div>
-              ) : (
-                <form onSubmit={handleNewsletterSubmit} className="flex flex-col gap-2">
-                  <input
-                    type="email"
-                    required
-                    placeholder="Enter your email"
-                    value={newsletterEmail}
-                    onChange={(e) => setNewsletterEmail(e.target.value)}
-                    className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-emerald-500 transition-colors"
-                  />
-                  <button
-                    type="submit"
-                    className="bg-white hover:bg-white/90 text-black text-xs font-bold py-2.5 rounded-xl transition-colors"
-                  >
-                    Subscribe
-                  </button>
-                </form>
-              )}
-            </div>
-          </div>
-
-          {/* Bottom Footer */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 text-[11px] text-white/40">
-            <span>© {new Date().getFullYear()} Equilibrium Inc. All rights reserved.</span>
-            <div className="flex gap-4">
-              <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-white transition-colors">Data Security</a>
-            </div>
+      {/* Subtle bottom footer overlay */}
+      <footer className="relative bg-[#050505] border-t border-white/5 py-12 px-6 text-center z-20">
+        <div className="max-w-2xl mx-auto flex flex-col items-center gap-6">
+          <span className="text-xl font-light tracking-[0.4em] text-white font-cinzel">MONAC</span>
+          <p className="text-xs text-neutral-400 tracking-wider max-w-md font-playfair italic">
+            MONAC represents the pinnacle of luxury, symmetry, and balance.
+          </p>
+          <div className="w-12 h-[1px] bg-amber-500/30" />
+          <div className="text-[10px] text-neutral-500 tracking-[0.2em] uppercase font-cinzel">
+            © 2026 MONAC HAUTE PARFUMERIE. ALL RIGHTS RESERVED.
           </div>
         </div>
       </footer>

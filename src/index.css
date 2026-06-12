@@ -4,151 +4,102 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: dark;
-  --bg-primary: #06070b;
-  --bg-secondary: #0c0e17;
-  --accent-green: #10b981;
-  --accent-purple: #8b5cf6;
-  --accent-blue: #06b6d4;
-  --glass-bg: rgba(10, 12, 22, 0.4);
-  --glass-border: rgba(255, 255, 255, 0.08);
+/* Custom Luxury Design Tokens & Base Styles */
+@layer base {
+  body {
+    background-color: #090909;
+    color: #e5e5e5;
+    font-family: 'Geist', sans-serif;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, .brand-font, .font-cinzel {
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.15em;
+  }
+
+  .serif-font, .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
 }
 
-* {
-  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  box-sizing: border-box;
-}
-
-body {
-  background-color: var(--bg-primary);
-  color: #f3f4f6;
-  overflow-x: clip;
-  margin: 0;
-  padding: 0;
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-::-webkit-scrollbar-track {
-  background: var(--bg-primary);
-}
-::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #334155;
-}
-
-/* Glassmorphism Class */
-.liquid-glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37),
-              inset 0 1px 1px rgba(255, 255, 255, 0.05);
-}
-
-.liquid-glass-premium {
-  background: rgba(15, 18, 36, 0.6);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5),
-              inset 0 1px 2px rgba(255, 255, 255, 0.1);
-}
-
-/* Canvas Radial Edge Mask */
-.canvas-mask {
+/* Custom Scroll Animation Styles */
+#frame-canvas {
   mask-image: radial-gradient(
-    ellipse 75% 70% at 50% 50%,
-    black 30%,
-    rgba(0, 0, 0, 0.8) 50%,
+    ellipse 65% 65% at 50% 50%, 
+    black 40%, 
     transparent 85%
   );
   -webkit-mask-image: radial-gradient(
-    ellipse 75% 70% at 50% 50%,
-    black 30%,
-    rgba(0, 0, 0, 0.8) 50%,
+    ellipse 65% 65% at 50% 50%, 
+    black 40%, 
     transparent 85%
   );
+  will-change: transform;
 }
 
-/* Scroll-Driven Animations & Fades */
-.scroll-phase-card {
+/* Glassmorphism Luxury Overlay Cards */
+.glass-card {
+  background: rgba(13, 13, 13, 0.55);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.65);
+}
+
+.glass-card-light {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Phase Reveal Cards Styles */
+.phase-card {
   opacity: 0;
-  transform: translateY(40px) scale(0.96);
+  transform: translateY(30px);
+  transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), 
+              transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
-  transition: opacity 0.8s cubic-bezier(0.21, 1.02, 0.43, 1.01),
-              transform 0.8s cubic-bezier(0.21, 1.02, 0.43, 1.01),
-              filter 0.8s ease;
-  filter: blur(8px);
 }
 
-.scroll-phase-card.visible {
+.phase-card.visible {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
   pointer-events: auto;
-  filter: blur(0);
 }
 
-/* Custom Text and Accent Gradients */
-.text-gradient-green-blue {
-  background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+/* Floating Badges (Phase 1) */
+.badge-left {
+  opacity: 0;
+  transform: translateX(-40px) rotate(-90deg);
+  transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.text-gradient-purple-blue {
-  background: linear-gradient(135deg, #a78bfa 0%, #3b82f6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.badge-left.opacity-100 {
+  opacity: 1;
+  transform: translateX(0) rotate(-90deg);
 }
 
-.text-gradient-gold {
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.badge-right {
+  opacity: 0;
+  transform: translateX(40px) rotate(90deg);
+  transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Pulsing loader animation */
-@keyframes loading-pulse {
-  0%, 100% {
-    transform: scale(0.98);
-    opacity: 0.6;
-  }
-  50% {
-    transform: scale(1.02);
-    opacity: 1;
-  }
+.badge-right.opacity-100 {
+  opacity: 1;
+  transform: translateX(0) rotate(90deg);
 }
 
-.animate-loading-pulse {
-  animation: loading-pulse 2s infinite ease-in-out;
+/* Hide Scrollbar */
+::-webkit-scrollbar {
+  display: none !important;
 }
 
-/* Micro-animations and Glows */
-.hover-glow:hover {
-  box-shadow: 0 0 25px rgba(16, 185, 129, 0.15);
-  border-color: rgba(16, 185, 129, 0.3);
-}
-
-.hover-glow-purple:hover {
-  box-shadow: 0 0 25px rgba(139, 92, 246, 0.15);
-  border-color: rgba(139, 92, 246, 0.3);
-}
-
-/* Responsive grid padding utility */
-.section-container {
-  max-width: 1280px;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
+html {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
 }
 
 /* Lenis Smooth Scroll CSS Rules */
@@ -172,4 +123,3 @@ html.lenis body {
 .lenis-scrolling iframe {
   pointer-events: none;
 }
-
