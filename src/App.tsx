@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Lenis from 'lenis';
 
-const TOTAL_FRAMES = 344;
-const BATCH_SIZE = 20;
+const TOTAL_FRAMES = 685;
+const BATCH_SIZE = 30;
 
 
 
@@ -274,7 +274,7 @@ export default function App() {
             </div>
             <div className="w-full h-[1px] bg-neutral-900 overflow-hidden rounded-full">
               <div
-                className="h-full bg-amber-500/80 transition-all duration-300 ease-out"
+                className="h-full bg-white transition-all duration-300 ease-out"
                 style={{ width: `${(loadedCount / TOTAL_FRAMES) * 100}%` }}
               />
             </div>
@@ -286,7 +286,7 @@ export default function App() {
       <header className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-6 py-6 md:px-12 bg-gradient-to-b from-black/60 to-transparent">
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="text-white hover:text-amber-500 transition-colors p-2"
+          className="text-white/70 hover:text-white transition-colors p-2"
           aria-label="Toggle Menu"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -299,22 +299,22 @@ export default function App() {
         </button>
 
         <a href="#" className="absolute left-1/2 -translate-x-1/2 select-none">
-          <span className="text-xl md:text-2xl font-light tracking-[0.35em] text-white hover:text-amber-500 transition-colors">
+          <span className="text-xl md:text-2xl font-light tracking-[0.35em] text-white hover:text-white/85 transition-colors">
             MONAC
           </span>
         </a>
 
         <div className="flex items-center gap-4">
-          <button className="text-white hover:text-amber-500 transition-colors p-2" aria-label="Search">
+          <button className="text-white/70 hover:text-white transition-colors p-2" aria-label="Search">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </button>
-          <button className="text-white hover:text-amber-500 transition-colors p-2 relative" aria-label="Shopping Cart">
+          <button className="text-white/70 hover:text-white transition-colors p-2 relative" aria-label="Shopping Cart">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
-            <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-amber-500 rounded-full animate-ping" />
+            <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-white rounded-full animate-ping" />
           </button>
         </div>
       </header>
@@ -327,12 +327,12 @@ export default function App() {
       >
         <div className="flex flex-col items-center justify-center h-full gap-8 text-center">
           <nav className="flex flex-col gap-6 text-lg md:text-2xl font-light tracking-[0.25em] text-white">
-            <a href="#" onClick={() => setMenuOpen(false)} className="hover:text-amber-500 transition-colors">COLLECTION</a>
-            <a href="#" onClick={() => setMenuOpen(false)} className="hover:text-amber-500 transition-colors">THE OLFACTORY NOTES</a>
-            <a href="#" onClick={() => setMenuOpen(false)} className="hover:text-amber-500 transition-colors">CRAFTSMANSHIP</a>
-            <a href="#" onClick={() => setMenuOpen(false)} className="hover:text-amber-500 transition-colors">PRE-ORDER</a>
+            <a href="#" onClick={() => setMenuOpen(false)} className="hover:text-neutral-400 transition-colors">COLLECTION</a>
+            <a href="#" onClick={() => setMenuOpen(false)} className="hover:text-neutral-400 transition-colors">THE OLFACTORY NOTES</a>
+            <a href="#" onClick={() => setMenuOpen(false)} className="hover:text-neutral-400 transition-colors">CRAFTSMANSHIP</a>
+            <a href="#" onClick={() => setMenuOpen(false)} className="hover:text-neutral-400 transition-colors">PRE-ORDER</a>
           </nav>
-          <div className="w-12 h-[1px] bg-amber-500/30 my-4" />
+          <div className="w-12 h-[1px] bg-white/10 my-4" />
           <div className="text-[10px] tracking-[0.2em] text-neutral-500">
             MONAC HAUTE PARFUMERIE © 2026
           </div>
@@ -342,13 +342,13 @@ export default function App() {
       {/* Floating Badges */}
       <div
         ref={leftBadgeRef}
-        className="badge-left pointer-events-none fixed top-1/2 left-8 md:left-12 z-20 text-[9px] md:text-[10px] tracking-[0.35em] font-light text-neutral-500 border-b border-amber-500/20 pb-2 uppercase origin-left"
+        className="badge-left pointer-events-none fixed top-1/2 left-8 md:left-12 z-20 text-[9px] md:text-[10px] tracking-[0.35em] font-light text-neutral-500 border-b border-white/10 pb-2 uppercase origin-left"
       >
         MONAC
       </div>
       <div
         ref={rightBadgeRef}
-        className="badge-right pointer-events-none fixed top-1/2 right-8 md:right-12 z-20 text-[9px] md:text-[10px] tracking-[0.35em] font-light text-neutral-500 border-b border-amber-500/20 pb-2 uppercase origin-right"
+        className="badge-right pointer-events-none fixed top-1/2 right-8 md:right-12 z-20 text-[9px] md:text-[10px] tracking-[0.35em] font-light text-neutral-500 border-b border-white/10 pb-2 uppercase origin-right"
       >
         EAU DE PARFUM
       </div>
@@ -362,7 +362,7 @@ export default function App() {
             id="frame-canvas"
             width={1280}
             height={720}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-auto h-[65vh] md:h-auto md:w-full max-w-[1280px] aspect-video object-contain"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[180%] h-auto md:w-full md:h-auto max-w-none md:max-w-[1280px] aspect-video object-contain"
           />
         </div>
 
@@ -372,11 +372,11 @@ export default function App() {
           ref={phase1Ref}
           className="phase-card fixed bottom-10 left-6 right-6 md:bottom-16 md:left-16 md:right-auto md:top-auto md:translate-y-0 z-20 max-w-sm md:max-w-md p-4 flex flex-col gap-4 text-center md:text-left items-center md:items-start"
         >
-          <span className="text-amber-500/80 text-[10px] font-semibold tracking-[0.25em] uppercase font-cinzel">MONAC / Signature</span>
+          <span className="text-white/40 text-[10px] font-semibold tracking-[0.25em] uppercase font-cinzel">MONAC / Signature</span>
           <p className="text-sm text-neutral-400 font-light leading-relaxed font-playfair italic">
             "A sensory exploration of absolute symmetry. Balanced perfectly between the ephemeral and the eternal, MONAC is designed to float with you through time."
           </p>
-          <div className="w-12 h-[1px] bg-amber-500/30 mt-2" />
+          <div className="w-12 h-[1px] bg-white/10 mt-2" />
         </div>
 
         {/* Phase 2: Scent Profile */}
@@ -384,21 +384,21 @@ export default function App() {
           ref={phase2Ref}
           className="phase-card fixed bottom-10 left-6 right-6 md:bottom-16 md:right-16 md:left-auto md:top-auto md:translate-y-0 z-20 max-w-sm md:max-w-md p-4 flex flex-col gap-4 text-center md:text-left items-center md:items-start"
         >
-          <span className="text-amber-500/80 text-[10px] font-semibold tracking-[0.25em] uppercase font-cinzel">The Scent Profile</span>
+          <span className="text-white/40 text-[10px] font-semibold tracking-[0.25em] uppercase font-cinzel">The Scent Profile</span>
           <h2 className="text-2xl md:text-3xl font-light text-white leading-tight font-cinzel">THE NOTES</h2>
           <div className="flex flex-col gap-4 mt-2 text-left w-full">
-            <div className="flex flex-col border-l border-amber-500/20 pl-3">
-              <span className="text-amber-500 text-[10px] tracking-[0.15em] font-semibold uppercase font-cinzel">Top Notes</span>
+            <div className="flex flex-col border-l border-white/10 pl-3">
+              <span className="text-white/60 text-[10px] tracking-[0.15em] font-semibold uppercase font-cinzel">Top Notes</span>
               <span className="text-sm text-white font-medium mt-0.5 font-playfair italic">Calabrian Bergamot & Pink Pepper</span>
               <span className="text-xs text-neutral-400 mt-1 font-light">A crisp, invigorating opening that captures the light.</span>
             </div>
-            <div className="flex flex-col border-l border-amber-500/20 pl-3">
-              <span className="text-amber-500 text-[10px] tracking-[0.15em] font-semibold uppercase font-cinzel">Heart Notes</span>
+            <div className="flex flex-col border-l border-white/10 pl-3">
+              <span className="text-white/60 text-[10px] tracking-[0.15em] font-semibold uppercase font-cinzel">Heart Notes</span>
               <span className="text-sm text-white font-medium mt-0.5 font-playfair italic">French Lavender & Incense</span>
               <span className="text-xs text-neutral-400 mt-1 font-light">A calm, meditative core that adds a layer of mystery.</span>
             </div>
-            <div className="flex flex-col border-l border-amber-500/20 pl-3">
-              <span className="text-amber-500 text-[10px] tracking-[0.15em] font-semibold uppercase font-cinzel">Base Notes</span>
+            <div className="flex flex-col border-l border-white/10 pl-3">
+              <span className="text-white/60 text-[10px] tracking-[0.15em] font-semibold uppercase font-cinzel">Base Notes</span>
               <span className="text-sm text-white font-medium mt-0.5 font-playfair italic">Indonesian Patchouli & Amberwood</span>
               <span className="text-xs text-neutral-400 mt-1 font-light">A warm, resinous foundation that lingers elegantly.</span>
             </div>
@@ -410,18 +410,18 @@ export default function App() {
           ref={phase3Ref}
           className="phase-card fixed bottom-10 left-6 right-6 md:bottom-16 md:left-16 md:right-auto md:top-auto md:translate-y-0 z-20 max-w-sm md:max-w-md p-4 flex flex-col gap-4 text-center md:text-left items-center md:items-start"
         >
-          <span className="text-amber-500/80 text-[10px] font-semibold tracking-[0.25em] uppercase font-cinzel">Artisanal Design</span>
+          <span className="text-white/40 text-[10px] font-semibold tracking-[0.25em] uppercase font-cinzel">Artisanal Design</span>
           <h2 className="text-2xl md:text-3xl font-light text-white leading-tight font-cinzel">CRAFTSMANSHIP</h2>
           <p className="text-sm text-neutral-400 font-light leading-relaxed font-playfair italic">
             Every bottle of MONAC is a piece of art. Formed from ultra-heavy glass, hand-polished to catch light, and crowned with a bespoke magnetic wooden cap that snaps perfectly into position.
           </p>
           <div className="flex gap-4 mt-2 w-full">
             <div className="flex flex-col flex-1 p-3 rounded-lg bg-neutral-950/40 border border-white/5 text-left">
-              <span className="text-amber-500 text-[9px] font-semibold tracking-[0.1em] uppercase font-cinzel">Bottle</span>
+              <span className="text-white/60 text-[9px] font-semibold tracking-[0.1em] uppercase font-cinzel">Bottle</span>
               <span className="text-xs text-neutral-300 mt-1">French Lead-Free Glass</span>
             </div>
             <div className="flex flex-col flex-1 p-3 rounded-lg bg-neutral-950/40 border border-white/5 text-left">
-              <span className="text-amber-500 text-[9px] font-semibold tracking-[0.1em] uppercase font-cinzel">Cap</span>
+              <span className="text-white/60 text-[9px] font-semibold tracking-[0.1em] uppercase font-cinzel">Cap</span>
               <span className="text-xs text-neutral-300 mt-1">Bespoke Magnetic Wood</span>
             </div>
           </div>
@@ -432,11 +432,11 @@ export default function App() {
           ref={phase4Ref}
           className="phase-card fixed bottom-10 left-6 right-6 md:bottom-16 md:right-16 md:left-auto md:top-auto md:translate-y-0 z-20 max-w-sm md:max-w-md p-4 flex flex-col gap-6 text-center md:text-left items-center md:items-start"
         >
-          <span className="text-amber-500/80 text-[10px] font-semibold tracking-[0.25em] uppercase font-cinzel">Exclusive Release</span>
+          <span className="text-white/40 text-[10px] font-semibold tracking-[0.25em] uppercase font-cinzel">Exclusive Release</span>
           <h2 className="text-2xl md:text-3xl font-light text-white leading-tight font-cinzel">OWN THE EXPERIENCE</h2>
           
           <div className="flex flex-col gap-4 w-full text-left">
-            <div className="flex justify-between items-center p-3 rounded-xl border border-amber-500/20 bg-amber-500/5">
+            <div className="flex justify-between items-center p-3 rounded-xl border border-white/10 bg-white/5">
               <div className="flex flex-col">
                 <span className="text-xs text-white font-medium font-cinzel">MONAC Eau de Parfum</span>
                 <span className="text-[10px] text-neutral-400 mt-0.5">Select Size</span>
@@ -446,7 +446,7 @@ export default function App() {
                   onClick={() => setActivePlannerTab('morning')}
                   className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold tracking-widest border transition-all font-cinzel ${
                     activePlannerTab === 'morning'
-                      ? 'bg-amber-500 border-amber-500 text-black'
+                      ? 'bg-white border-white text-black'
                       : 'border-white/10 hover:border-white/20 text-white'
                   }`}
                 >
@@ -456,7 +456,7 @@ export default function App() {
                   onClick={() => setActivePlannerTab('afternoon')}
                   className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold tracking-widest border transition-all font-cinzel ${
                     activePlannerTab === 'afternoon'
-                      ? 'bg-amber-500 border-amber-500 text-black'
+                      ? 'bg-white border-white text-black'
                       : 'border-white/10 hover:border-white/20 text-white'
                   }`}
                 >
@@ -467,7 +467,7 @@ export default function App() {
 
             <div className="flex justify-between items-end border-b border-white/5 pb-4">
               <span className="text-xs text-neutral-400">Price</span>
-              <span className="text-xl font-light text-amber-500 font-cinzel">
+              <span className="text-xl font-light text-white font-cinzel">
                 {activePlannerTab === 'morning' ? '$140.00' : '$220.00'}
               </span>
             </div>
@@ -480,7 +480,7 @@ export default function App() {
           ) : (
             <button
               onClick={() => setNewsletterSubscribed(true)}
-              className="w-full py-4 bg-amber-500 hover:bg-amber-400 text-black font-semibold text-xs tracking-[0.2em] rounded-xl transition-all duration-300 shadow-[0_4px_20px_rgba(245,158,11,0.2)] hover:shadow-[0_4px_25px_rgba(245,158,11,0.3)] uppercase font-cinzel"
+              className="w-full py-4 bg-white hover:bg-neutral-200 text-black font-semibold text-xs tracking-[0.2em] rounded-xl transition-all duration-300 shadow-[0_4px_20px_rgba(255,255,255,0.05)] hover:shadow-[0_4px_25px_rgba(255,255,255,0.1)] uppercase font-cinzel"
             >
               Reserve Bottle
             </button>
@@ -498,7 +498,7 @@ export default function App() {
           <p className="text-xs text-neutral-400 tracking-wider max-w-md font-playfair italic">
             MONAC represents the pinnacle of luxury, symmetry, and balance.
           </p>
-          <div className="w-12 h-[1px] bg-amber-500/30" />
+          <div className="w-12 h-[1px] bg-white/10" />
           <div className="text-[10px] text-neutral-500 tracking-[0.2em] uppercase font-cinzel">
             © 2026 MONAC HAUTE PARFUMERIE. ALL RIGHTS RESERVED.
           </div>
