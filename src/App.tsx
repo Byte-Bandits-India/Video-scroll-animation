@@ -157,6 +157,7 @@ export default function App() {
     if (!loadingComplete) return;
 
     let rAFId: number;
+    let lastTime = performance.now();
 
     const tick = () => {
       const canvas = canvasRef.current;
@@ -168,15 +169,30 @@ export default function App() {
       const ctx = canvas.getContext('2d');
       const images = imagesRef.current;
       
+      // Calculate time delta for frame-rate independent speed limiting
+      const currentTime = performance.now();
+      const dt = Math.min(0.1, (currentTime - lastTime) / 1000);
+      lastTime = currentTime;
+      
       // Interpolate the frame index smoothly
       const targetFrame = currentFrameRef.current;
       const diff = targetFrame - animatedFrameRef.current;
       
-      // 0.15 coefficient filters out micro-stutters from slow scrolls without lag
+      let step = diff * 0.07;
+      
+      // Limit speed to a maximum of 140 frames/sec to prevent video skipping on fast scrolls
+      const maxFramesPerSec = 140;
+      const maxStep = maxFramesPerSec * dt;
+      if (step > maxStep) {
+        step = maxStep;
+      } else if (step < -maxStep) {
+        step = -maxStep;
+      }
+      
       if (Math.abs(diff) < 0.01) {
         animatedFrameRef.current = targetFrame;
       } else {
-        animatedFrameRef.current += diff * 0.07;
+        animatedFrameRef.current += step;
       }
 
       const currentFrame = Math.max(0, Math.min(TOTAL_FRAMES - 1, Math.round(animatedFrameRef.current)));
@@ -354,7 +370,7 @@ export default function App() {
       </div>
 
       {/* Scroll Runway */}
-      <div ref={runwayRef} className="relative w-full h-[450vh] bg-[#090909]">
+      <div ref={runwayRef} className="relative w-full h-[650vh] bg-[#090909]">
         {/* Sticky Canvas Frame Container */}
         <div className="sticky top-0 left-0 w-full h-screen overflow-hidden flex items-center justify-center z-10">
           <canvas
