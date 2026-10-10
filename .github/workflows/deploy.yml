@@ -1,0 +1,92 @@
+name: Deploy Video Scroll Animation to EC2 Automation Platform
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-video-scroll-animation
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    name: Build SPA & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: 📦 Install Dependencies
+        run: npm ci
+
+      - name: 🏗️ Build Vite Static Application
+        run: npm run build
+
+      - name: 📦 Package Static SPA Artifact
+        run: |
+          mkdir -p /tmp/artifact/dist
+          cp -a dist/. /tmp/artifact/dist/
+          tar -czf /tmp/video-scroll-deploy.tar.gz -C /tmp/artifact .
+          echo "✅ Package created: $(ls -lh /tmp/video-scroll-deploy.tar.gz)"
+
+      - name: 🔑 Configure SSH Key
+        env:
+          SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          if echo "$SSH_KEY" | grep -q '\\n'; then
+            printf "%b\n" "$SSH_KEY" > ~/.ssh/id_rsa
+          else
+            printf "%s\n" "$SSH_KEY" > ~/.ssh/id_rsa
+          fi
+          sed -i 's/\r$//' ~/.ssh/id_rsa
+          if [ -n "$(tail -c1 ~/.ssh/id_rsa 2>/dev/null)" ]; then
+            echo "" >> ~/.ssh/id_rsa
+          fi
+          chmod 600 ~/.ssh/id_rsa
+          cat << 'EOF_SSH' > ~/.ssh/config
+          Host *
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+            ServerAliveInterval 15
+            ServerAliveCountMax 3
+          EOF_SSH
+          chmod 600 ~/.ssh/config
+
+      - name: 📤 Transfer Artifact to EC2
+        env:
+          HOST: ${{ secrets.EC2_HOST || '15.135.74.113' }}
+          USER: ${{ secrets.EC2_USER || 'ec2-user' }}
+        run: |
+          echo "Uploading /tmp/video-scroll-deploy.tar.gz to EC2..."
+          scp -i ~/.ssh/id_rsa /tmp/video-scroll-deploy.tar.gz "${USER}@${HOST}:/tmp/video-scroll-deploy.tar.gz"
+
+      - name: 🚀 Execute Atomic Deployment Engine
+        env:
+          HOST: ${{ secrets.EC2_HOST || '15.135.74.113' }}
+          USER: ${{ secrets.EC2_USER || 'ec2-user' }}
+        run: |
+          ssh -i ~/.ssh/id_rsa "${USER}@${HOST}" bash -s << 'EOF_DEPLOY'
+            set -euo pipefail
+            PROJECT="video-scroll-animation"
+            ARTIFACT="/tmp/video-scroll-deploy.tar.gz"
+            ENGINE="/opt/devops-automation/scripts/deploy.sh"
+
+            if [[ ! -f "$ENGINE" ]]; then
+              echo "❌ ERROR: Deployment engine not found at $ENGINE"
+              exit 1
+            fi
+
+            echo "🚀 Executing native deployment for $PROJECT..."
+            "$ENGINE" "$PROJECT" "$ARTIFACT"
+            rm -f "$ARTIFACT"
+          EOF_DEPLOY
